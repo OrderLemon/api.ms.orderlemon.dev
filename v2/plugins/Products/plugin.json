@@ -1,0 +1,9 @@
+{
+    "name": "Products",
+    "slug": "products",
+    "description": "Provides products for a shop through the products service.",
+    "version": "1.0.0",
+    "author": "PMSRAPI",
+    "enabled": true,
+    "dependencies": []
+}
