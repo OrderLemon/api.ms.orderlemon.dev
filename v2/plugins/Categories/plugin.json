@@ -1,0 +1,9 @@
+{
+    "name": "Categories",
+    "slug": "categories",
+    "description": "Provides categories for a shop through the categories service.",
+    "version": "1.0.0",
+    "author": "PMSRAPI",
+    "enabled": true,
+    "dependencies": []
+}

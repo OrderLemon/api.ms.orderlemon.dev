@@ -2,24 +2,24 @@
 
 declare(strict_types=1);
 
-namespace Plugins\Products\Controllers;
+namespace Plugins\Categories\Controllers;
 
 use Exception;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Exception\ServiceException;
 
-final class ProductsController
+final class CategoriesController
 {
     public function __construct(
         private readonly ServiceClient $serviceClient,
     ) {}
 
-    public function getProducts(string $shopId): Response
+    public function getCategories(string $shopId): Response
     {
         try{
             $response = $this->serviceClient->call(
-                'get_products',
+                'get_categories',
                 ['shop_id' => $shopId],
             );
         }catch(ServiceException $ex){
@@ -27,10 +27,10 @@ final class ProductsController
         }
 
         if(isset($response["rows"])){
-            return Response::ok(["products" => $response["rows"]]);
+            return Response::ok(["categories" => $response["rows"]]);
         }
 
-        return Response::ok(["products" => []]);
+        return Response::ok(["categories" => []]);
 
     }
 }
