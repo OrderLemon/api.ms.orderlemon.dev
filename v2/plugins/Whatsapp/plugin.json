@@ -1,0 +1,9 @@
+{
+    "name": "Whatsapp",
+    "slug": "whatsapp",
+    "description": "WhatsApp inbound endpoint: a pure pass-through that validates the provider's webhook envelope and forwards it to the AI + gateway microservice (see SPLIT_PLAN.md). No database, no local state.",
+    "version": "1.0.0",
+    "author": "Mathieu Van daele",
+    "enabled": true,
+    "dependencies": []
+}
