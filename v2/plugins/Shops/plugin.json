@@ -1,0 +1,9 @@
+{
+    "name": "Shops",
+    "slug": "shops",
+    "description": "Basic shop resource lookups (by id, by phone) through the shops service.",
+    "version": "1.0.0",
+    "author": "PMSRAPI",
+    "enabled": true,
+    "dependencies": []
+}
