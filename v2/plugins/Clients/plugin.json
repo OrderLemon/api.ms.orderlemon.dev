@@ -1,0 +1,9 @@
+{
+    "name": "Clients",
+    "slug": "clients",
+    "description": "Shop client lookups by phone number through the clients service.",
+    "version": "1.0.0",
+    "author": "PMSRAPI",
+    "enabled": true,
+    "dependencies": []
+}

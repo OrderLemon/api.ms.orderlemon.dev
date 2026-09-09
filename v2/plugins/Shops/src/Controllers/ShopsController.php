@@ -42,7 +42,6 @@ final class ShopsController
         try {
             $response = $this->serviceClient->call(
                 'shop_get_by_phone',
-                [],
                 ['phone' => $phone],
             );
         } catch (ServiceException $ex) {

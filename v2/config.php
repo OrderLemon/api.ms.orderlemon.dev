@@ -27,7 +27,7 @@ return [
     // --- Where the secret config JSON lives (shared with v1) ---
     // Default: parent directory of the project root, named after the service.
     // Absolute paths are recommended in production.
-    'secrets_path' => dirname(__DIR__, 2) . '/configs/ms/api.ms.json',
+    'secrets_path' => dirname(__DIR__, 3) . '/configs/ms/api.ms.json',
 
     // --- Runtime-managed webhook registry (built/rebuilt via REST) ---
     // A SEPARATE file from the secret config: it is writable at runtime, so it
