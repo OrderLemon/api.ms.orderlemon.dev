@@ -1,0 +1,9 @@
+{
+    "name": "Orders",
+    "slug": "orders",
+    "description": "Shop order lookups (active list, usual basket, reorder) through the orders service.",
+    "version": "1.0.0",
+    "author": "PMSRAPI",
+    "enabled": true,
+    "dependencies": []
+}

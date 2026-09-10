@@ -28,6 +28,7 @@ final class ClientsController
         try {
             $response = $this->serviceClient->call(
                 'client_get_info',
+                [],
                 ['shop_id' => $shopId, 'phonenumber' => $phonenumber],
             );
         } catch (ServiceException $ex) {
