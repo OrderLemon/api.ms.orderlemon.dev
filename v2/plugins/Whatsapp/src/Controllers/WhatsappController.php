@@ -62,6 +62,10 @@ final class WhatsappController
 
         $response = $this->ai->handleInbound($body);
 
+        if($response === null || $response === []){
+            return Response::error(501, ["invalid response" => "Invalid resposnse from whatsapp gateway"]);
+        }
+
         return Response::ok($response);
     }
 

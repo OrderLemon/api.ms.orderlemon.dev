@@ -1,0 +1,9 @@
+{
+    "name": "Cart",
+    "slug": "cart",
+    "description": "Cart gateway (cart_update/cart_checkout/cart_get) forwarding to the cart microservice via ServiceClient.",
+    "version": "1.0.0",
+    "author": "PMSRAPI",
+    "enabled": true,
+    "dependencies": []
+}
