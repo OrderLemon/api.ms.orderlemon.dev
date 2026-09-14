@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Plugins\Whatsapp\Support;
 
 use Pmsrapi\V2\Cluster\ServiceClient;
+use Pmsrapi\V2\Support\Logger;
+use Throwable;
 
 /**
  * Client for the "AI + gateway" microservice (Service B in ../../SPLIT_PLAN.md).
@@ -22,6 +24,7 @@ final class WhatsappAiClient
 {
     public function __construct(
         private readonly ServiceClient $client,
+        private readonly Logger $logger,
     ) {}
 
     /**
@@ -30,6 +33,17 @@ final class WhatsappAiClient
      */
     public function handleInbound(array $envelope): array
     {
-        return $this->client->call('whatsapp_inbound', [], $envelope);
+        try {
+            return $this->client->call('whatsapp_inbound', [], $envelope);
+        } catch (Throwable $ex) {
+            $this->logger->error("client_service: 'whatsapp_inbound' call failed", [
+                'exception' => $ex::class,
+                'error' => $ex->getMessage(),
+                'previous' => $ex->getPrevious()?->getMessage(),
+                'file' => $ex->getFile() . ':' . $ex->getLine(),
+            ]);
+
+            return [];
+        }
     }
 }
