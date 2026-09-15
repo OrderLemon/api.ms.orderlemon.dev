@@ -26,8 +26,8 @@ final class ProductsController
             return Response::error($ex->statusCode(), ["error" => $ex->getMessage()]);
         }
 
-        if(isset($response["rows"])){
-            return Response::ok(["products" => $response["rows"]]);
+        if(isset($response["products"])){
+            return Response::ok(["products" => $response["products"]]);
         }
 
         return Response::ok(["products" => []]);
