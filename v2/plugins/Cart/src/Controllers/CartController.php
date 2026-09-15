@@ -52,9 +52,7 @@ final class CartController
             throw new ValidationException(["invalid phone" => "Invalid phone number provided"]);
         }
         
-        $this->requireNonEmptyString($request->body, 'phonenumber');
-
-        return $this->call('cart_get', $request->body);
+        return $this->call('cart_get', ["phonenumber" => $phone]);
     }
 
     /** @param array<string, mixed> $body */

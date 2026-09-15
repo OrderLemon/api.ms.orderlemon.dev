@@ -1,0 +1,9 @@
+{
+    "name": "Campaigns",
+    "slug": "campaigns",
+    "description": "Provides campaigns for a shop through the campaigns service.",
+    "version": "1.0.0",
+    "author": "PMSRAPI",
+    "enabled": true,
+    "dependencies": []
+}

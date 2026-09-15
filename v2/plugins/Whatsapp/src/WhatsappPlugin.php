@@ -37,6 +37,7 @@ final class WhatsappPlugin extends AbstractPlugin
     {
         $registrar->singleton(WhatsappAiClient::class, static fn(Container $c): WhatsappAiClient => new WhatsappAiClient(
             $c->get(ServiceClient::class),
+            $c->get(Logger::class),
         ));
 
         $registrar->singleton(

@@ -2,35 +2,34 @@
 
 declare(strict_types=1);
 
-namespace Plugins\Categories\Controllers;
+namespace Plugins\Campaigns\Controllers;
 
-use Exception;
 use Pmsrapi\V2\Cluster\ServiceClient;
-use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Exception\ServiceException;
+use Pmsrapi\V2\Http\Response;
 
-final class CategoriesController
+final class CampaignsController
 {
     public function __construct(
         private readonly ServiceClient $serviceClient,
     ) {}
 
-    public function getCategories(string $shopId): Response
+    public function getCampaigns(string $shopId): Response
     {
         try{
             $response = $this->serviceClient->call(
-                'get_categories',
+                'get_campaigns',
                 ['shop_id' => $shopId],
             );
         }catch(ServiceException $ex){
             return Response::error($ex->statusCode(), ["error" => $ex->getMessage()]);
         }
 
-        if(isset($response["categories"])){
-            return Response::ok(["categories" => $response["categories"]]);
+        if(isset($response["campaigns"])){
+            return Response::ok(["campaigns" => $response["campaigns"]]);
         }
 
-        return Response::ok(["categories" => []]);
+        return Response::ok(["campaigns" => []]);
 
     }
 }
