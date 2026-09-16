@@ -1,0 +1,9 @@
+{
+    "name": "Ticket",
+    "slug": "ticket",
+    "description": "Order ticket (receipt) data lookups through the cart service.",
+    "version": "1.0.0",
+    "author": "PMSRAPI",
+    "enabled": true,
+    "dependencies": []
+}
