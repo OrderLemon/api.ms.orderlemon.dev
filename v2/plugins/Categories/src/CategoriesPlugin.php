@@ -35,5 +35,33 @@ final class CategoriesPlugin extends AbstractPlugin
                     => $container->get(CategoriesController::class)->getCategories($params['shop_id']),
             ),
         );
+
+        $router->post(
+            '/{shop_id}',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(CategoriesController::class)->createCategory($request, $params['shop_id']),
+            ),
+        );
+
+        $router->put(
+            '/{shop_id}/{id}',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(CategoriesController::class)->updateCategory(
+                        $request,
+                        $params['shop_id'],
+                        $params['id'],
+                    ),
+            ),
+        );
+
+        $router->delete(
+            '/{shop_id}/{id}',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(CategoriesController::class)->deleteCategory($params['shop_id'], $params['id']),
+            ),
+        );
     }
 }

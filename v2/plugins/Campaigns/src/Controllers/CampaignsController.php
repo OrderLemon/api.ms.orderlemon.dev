@@ -16,20 +16,15 @@ final class CampaignsController
 
     public function getCampaigns(string $shopId): Response
     {
-        try{
+        try {
             $response = $this->serviceClient->call(
                 'get_campaigns',
                 ['shop_id' => $shopId],
             );
-        }catch(ServiceException $ex){
+        } catch (ServiceException $ex) {
             return Response::error($ex->statusCode(), ["error" => $ex->getMessage()]);
         }
 
-        if(isset($response["campaigns"])){
-            return Response::ok(["campaigns" => $response["campaigns"]]);
-        }
-
-        return Response::ok(["campaigns" => []]);
-
+        return Response::ok($response);
     }
 }
