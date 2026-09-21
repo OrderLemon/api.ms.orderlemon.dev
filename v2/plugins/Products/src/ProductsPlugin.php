@@ -35,5 +35,44 @@ final class ProductsPlugin extends AbstractPlugin
                     => $container->get(ProductsController::class)->getProducts($params['shop_id']),
             ),
         );
+
+        $router->get(
+            '/{shop_id}/category/{category_id}',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(ProductsController::class)->getProductsForCategory(
+                        $params['shop_id'],
+                        $params['category_id'],
+                    ),
+            ),
+        );
+
+        $router->post(
+            '/{shop_id}',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(ProductsController::class)->createProduct($request, $params['shop_id']),
+            ),
+        );
+
+        $router->put(
+            '/{shop_id}/{id}',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(ProductsController::class)->updateProduct(
+                        $request,
+                        $params['shop_id'],
+                        $params['id'],
+                    ),
+            ),
+        );
+
+        $router->delete(
+            '/{shop_id}/{id}',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(ProductsController::class)->deleteProduct($params['shop_id'], $params['id']),
+            ),
+        );
     }
 }

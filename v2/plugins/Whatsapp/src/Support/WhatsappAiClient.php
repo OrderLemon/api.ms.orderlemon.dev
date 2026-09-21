@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Plugins\Whatsapp\Support;
 
 use Pmsrapi\V2\Cluster\ServiceClient;
+use Pmsrapi\V2\Exception\ServiceException;
 use Pmsrapi\V2\Support\Logger;
-use Throwable;
 
 /**
  * Client for the "AI + gateway" microservice (Service B in ../../SPLIT_PLAN.md).
@@ -30,12 +30,13 @@ final class WhatsappAiClient
     /**
      * @param array<string, mixed> $envelope the raw inbound webhook body
      * @return array<string, mixed> whatever Service B reports back
+     * @throws ServiceException if the call to Service B fails
      */
     public function handleInbound(array $envelope): array
     {
         try {
             return $this->client->call('whatsapp_inbound', [], $envelope);
-        } catch (Throwable $ex) {
+        } catch (ServiceException $ex) {
             $this->logger->error("client_service: 'whatsapp_inbound' call failed", [
                 'exception' => $ex::class,
                 'error' => $ex->getMessage(),
@@ -43,7 +44,7 @@ final class WhatsappAiClient
                 'file' => $ex->getFile() . ':' . $ex->getLine(),
             ]);
 
-            return [];
+            throw $ex;
         }
     }
 }

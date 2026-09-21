@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Plugins\Whatsapp\Controllers;
 
 use Plugins\Whatsapp\Support\WhatsappAiClient;
+use Pmsrapi\V2\Exception\ServiceException;
 use Pmsrapi\V2\Exception\ValidationException;
 use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
@@ -60,10 +61,10 @@ final class WhatsappController
             'provider' => $body['data_provider'] ?? null,
         ]);
 
-        $response = $this->ai->handleInbound($body);
-
-        if($response === null || $response === []){
-            return Response::error(501, ["invalid response" => "Invalid resposnse from whatsapp gateway"]);
+        try {
+            $response = $this->ai->handleInbound($body);
+        } catch (ServiceException $ex) {
+            return Response::error($ex->statusCode(), ["error" => $ex->getMessage()]);
         }
 
         return Response::ok($response);
