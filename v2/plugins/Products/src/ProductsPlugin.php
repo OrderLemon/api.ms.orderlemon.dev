@@ -12,6 +12,8 @@ use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Plugin\AbstractPlugin;
 use Pmsrapi\V2\Plugin\PluginRegistrar;
 use Pmsrapi\V2\Plugin\PluginRouter;
+use Pmsrapi\V2\Services\ValidationService;
+use Pmsrapi\V2\Support\Logger;
 use Pmsrapi\V2\Support\ShopContext;
 
 final class ProductsPlugin extends AbstractPlugin
@@ -22,6 +24,8 @@ final class ProductsPlugin extends AbstractPlugin
             ProductsController::class,
             static fn(Container $container): ProductsController => new ProductsController(
                 $container->get(ServiceClient::class),
+                $container->get(Logger::class),
+                $container->get(ValidationService::class),
             ),
         );
     }

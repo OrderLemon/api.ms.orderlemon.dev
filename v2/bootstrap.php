@@ -41,6 +41,7 @@ use Pmsrapi\V2\Plugin\PluginManager;
 use Pmsrapi\V2\Queue\RedisQueue;
 use Pmsrapi\V2\Queue\WebhookDispatcher;
 use Pmsrapi\V2\Security\TokenStore;
+use Pmsrapi\V2\Services\ValidationService;
 use Pmsrapi\V2\Support\Logger;
 use Pmsrapi\V2\Webhook\WebhookStore;
 
@@ -62,6 +63,8 @@ $container = new Container();
 $container->instance(Config::class, $config);
 
 $container->singleton(Logger::class, static fn(Container $c): Logger => new Logger($c->get(Config::class)));
+
+$container->singleton(ValidationService::class, static fn(): ValidationService => new ValidationService());
 
 $container->singleton(RedisClient::class, static fn(Container $c): RedisClient => new RedisClient($c->get(Config::class)));
 
