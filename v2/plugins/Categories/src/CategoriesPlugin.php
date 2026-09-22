@@ -36,6 +36,14 @@ final class CategoriesPlugin extends AbstractPlugin
             ),
         );
 
+        $router->get(
+            '/{shop_id}/{id}',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(CategoriesController::class)->getCategory($params['shop_id'], $params['id']),
+            ),
+        );
+
         $router->post(
             '/{shop_id}',
             ShopContext::wrap(

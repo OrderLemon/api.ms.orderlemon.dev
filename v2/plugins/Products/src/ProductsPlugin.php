@@ -47,6 +47,14 @@ final class ProductsPlugin extends AbstractPlugin
             ),
         );
 
+        $router->get(
+            '/{shop_id}/{id}',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(ProductsController::class)->getProduct($params['shop_id'], $params['id']),
+            ),
+        );
+
         $router->post(
             '/{shop_id}',
             ShopContext::wrap(
