@@ -115,6 +115,26 @@ final class ValidationService
         }
     }
 
+    /** @param bool $required also flag when the field is absent */
+    public function integer(array $body, string $field, string $label, bool $required = false): void
+    {
+        if (!array_key_exists($field, $body)) {
+            if ($required) {
+                $this->addError(
+                    $field,
+                    "{$field} is required and must be an integer",
+                    "{$label} is required.",
+                );
+            }
+
+            return;
+        }
+
+        if (filter_var($body[$field], FILTER_VALIDATE_INT) === false) {
+            $this->addError($field, "{$field} must be an integer", "{$label} must be a whole number.");
+        }
+    }
+
     public function boolean(array $body, string $field, string $label): void
     {
         if (array_key_exists($field, $body)
