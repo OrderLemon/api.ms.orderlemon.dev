@@ -16,3 +16,4 @@ test-env/*.json
 .claude/clients_ms.md
 .claude/orders.md
 .claude/cart.md
+postman-products-categories.md

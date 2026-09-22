@@ -23,6 +23,14 @@ final class CategoriesController
         return $this->call('categories_get', ['shop_id' => $shopId]);
     }
 
+    public function getCategory(string $shopId, string $id): Response
+    {
+        $shopId = $this->requireShopId($shopId);
+        $id = $this->requirePositiveInt($id, 'id');
+
+        return $this->call('categories_get_cagetory', ['shop_id' => $shopId, 'id' => $id]);
+    }
+
     public function createCategory(Request $request, string $shopId): Response
     {
         $shopId = $this->requireShopId($shopId);

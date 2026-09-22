@@ -31,6 +31,14 @@ final class ProductsController
         return $this->call('products_get_for_category', ['shop_id' => $shopId, 'category_id' => $categoryId]);
     }
 
+    public function getProduct(string $shopId, string $id): Response
+    {
+        $shopId = $this->requireShopId($shopId);
+        $id = $this->requirePositiveInt($id, 'id');
+
+        return $this->call('products_get_product', ['shop_id' => $shopId, 'id' => $id]);
+    }
+
     public function createProduct(Request $request, string $shopId): Response
     {
         $shopId = $this->requireShopId($shopId);
