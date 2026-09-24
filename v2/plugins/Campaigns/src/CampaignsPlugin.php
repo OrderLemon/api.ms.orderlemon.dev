@@ -32,6 +32,13 @@ final class CampaignsPlugin extends AbstractPlugin
 
     public function routes(PluginRouter $router, Container $container): void
     {
+
+        $router->get(
+            '/config',
+            static fn(Request $request, array $params): Response
+                => $container->get(CampaignsController::class)->getConfigOptions(),
+        );
+
         $router->get(
             '/{shop_id}',
             ShopContext::wrap(
