@@ -118,6 +118,12 @@ final class CampaignsController
         private readonly ValidationService $validationService,
     ) {}
 
+
+    public function getConfigOptions(): Response
+    {
+        return $this->call('campaigns_config_options', []);
+    }
+
     public function getCampaigns(string $shopId): Response
     {
         $shopId = $this->requireShopId($shopId);
