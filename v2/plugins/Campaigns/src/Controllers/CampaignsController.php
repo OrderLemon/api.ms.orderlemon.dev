@@ -6,8 +6,6 @@ namespace Plugins\Campaigns\Controllers;
 
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Exception\ApiException;
-use Pmsrapi\V2\Exception\ConflictException;
-use Pmsrapi\V2\Exception\NotFoundException;
 use Pmsrapi\V2\Exception\ServiceException;
 use Pmsrapi\V2\Exception\ValidationException;
 use Pmsrapi\V2\Http\Request;
@@ -20,11 +18,26 @@ use Pmsrapi\V2\Support\Logger;
  * `GET /campaigns/config`), and this gateway used to keep its own separate,
  * hardcoded copy of those rules. That copy drifted out of sync (it never
  * learned about campaign_start/campaign_end/campaign_config_id becoming
- * required), so it's removed here rather than kept in sync by hand —
- * campaigns.ms's 422 is translated by call() below like any other error.
+ * required), so it's removed here rather than kept in sync by hand.
+ *
+ * call() below goes through ServiceClient::stream() rather than
+ * ServiceClient::call() — deliberately. call() discards the response BODY
+ * on any 4xx/5xx (it only keeps the HTTP status), so a real validation
+ * error from campaigns.ms — field-level messages, the actual reason — never
+ * reaches the client; the gateway could only report a generic "HTTP 422".
  */
 final class CampaignsController
 {
+
+    private const array STATUS_BY_ERROR_CODE = [
+        'not_found' => 404,
+        'conflict' => 409,
+        'validation_failed' => 422,
+        'method_not_allowed' => 405,
+        'rate_limited' => 429,
+        'database_error' => 500,
+    ];
+
     public function __construct(
         private readonly ServiceClient $serviceClient,
         private readonly Logger $logger,
@@ -75,32 +88,42 @@ final class CampaignsController
 
     private function call(string $function, array $params, array $payload = []): Response
     {
-        try {
-            $response = $this->serviceClient->call($function, $params, $payload);
-        } catch (ServiceException $ex) {
-            $this->logger->error('Proxied call failed', [
-                'function' => $function,
-                'status' => $ex->statusCode(),
-                'message' => $ex->getMessage(),
-            ]);
-
-            throw match ($ex->statusCode()) {
-                404 => new NotFoundException('That campaign could not be found.'),
-                409 => new ConflictException('A campaign with that configuration already exists.'),
-                422 => new ValidationException([], 'The information you provided could not be processed.'),
-                429 => new ServiceException(
-                    'Too many requests — please wait a moment and try again.',
-                    429,
-                    'rate_limited',
-                ),
-                default => new ServiceException(
-                    'Something went wrong processing this request. Please try again.',
-                    $ex->statusCode() >= 500 ? 502 : $ex->statusCode(),
-                ),
-            };
+        $envelope = null;
+        foreach ($this->serviceClient->stream($function, $params, $payload) as $record) {
+            $envelope = $record;
+            break; // exactly one record expected: the whole response body.
         }
 
-        return Response::ok($response);
+        // No record at all: this framework's Response only ever sends a
+        // truly empty body for 204 No Content (every other status — 200,
+        // 201, 4xx, 5xx — carries a JSON envelope)
+        if ($envelope === null) {
+            return Response::ok([]);
+        }
+
+        if (!is_array($envelope)) {
+            $this->logger->error('Non-object response from proxied call', ['function' => $function]);
+
+            throw new ServiceException("Non-object response from '{$function}'");
+        }
+
+        if (!($envelope['success'] ?? false)) {
+            $error = is_array($envelope['error'] ?? null) ? $envelope['error'] : [];
+            $this->logger->error('Proxied call failed', ['function' => $function, 'error' => $error]);
+
+            $this->throwFor($error);
+        }
+
+        return Response::ok(is_array($envelope['data'] ?? null) ? $envelope['data'] : []);
+    }
+
+    private function throwFor(array $error): never
+    {
+        $code = is_string($error['code'] ?? null) ? $error['code'] : 'service_error';
+        $message = is_string($error['message'] ?? null) ? $error['message'] : 'Request failed';
+        $details = is_array($error['details'] ?? null) ? $error['details'] : [];
+
+        throw new ApiException($message, self::STATUS_BY_ERROR_CODE[$code] ?? 502, $code, $details);
     }
 
     private function requireShopId(string $value): int
