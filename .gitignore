@@ -17,5 +17,8 @@ test-env/*.json
 .claude/orders.md
 .claude/cart.md
 .claude/call-vs-stream.md
+.claude/security-incident.md
+.claude/List.md
 postman-products-categories.md
 postman-campaigns.md
+nbproject/*

@@ -7,6 +7,7 @@ namespace Plugins\Orders;
 use Plugins\Orders\Controllers\OrdersController;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Core\Container;
+use Pmsrapi\V2\Support\Logger;
 use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Plugin\AbstractPlugin;
@@ -21,19 +22,22 @@ final class OrdersPlugin extends AbstractPlugin
             OrdersController::class,
             static fn(Container $container): OrdersController => new OrdersController(
                 $container->get(ServiceClient::class),
+                $container->get(Logger::class),
             ),
         );
     }
 
     public function routes(PluginRouter $router, Container $container): void
     {
-        $router->get('/{shop_id}/list', static fn(Request $request, array $params): Response
+        // Identifiers in the path; phone numbers in the JSON body, never the URL.
+
+        $router->get('/{shop_id}/active', static fn(Request $request, array $params): Response
             => $container->get(OrdersController::class)->listActive($params['shop_id']));
 
-        $router->get('/{shop_id}/usual/{phone}', static fn(Request $request, array $params): Response
-            => $container->get(OrdersController::class)->usualForClient($params['shop_id'], $params['phone']));
+        $router->post('/{shop_id}/client/usual', static fn(Request $request, array $params): Response
+            => $container->get(OrdersController::class)->usualForClient($request, $params['shop_id']));
 
-        $router->post('/{shop_id}/reorder', static fn(Request $request, array $params): Response
+        $router->post('/{shop_id}/client/reorder', static fn(Request $request, array $params): Response
             => $container->get(OrdersController::class)->reorder($request, $params['shop_id']));
     }
 }
