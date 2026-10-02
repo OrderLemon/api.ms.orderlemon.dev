@@ -7,6 +7,7 @@ namespace Plugins\Shops\Controllers;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Exception\ServiceException;
 use Pmsrapi\V2\Exception\ValidationException;
+use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
 
 final class ShopsController
@@ -15,13 +16,12 @@ final class ShopsController
         private readonly ServiceClient $serviceClient,
     ) {}
 
-    /** GET /shops/{id} */
-    public function getById(string $id): Response
+    public function getShop(string $shopId): Response
     {
         try {
             $response = $this->serviceClient->call(
-                'shop_get_by_id',
-                ['id' => $id],
+                'shop_get',
+                ['shop_id' => $shopId],
             );
         } catch (ServiceException $ex) {
             return Response::error($ex->statusCode(), ["error" => $ex->getMessage()]);
@@ -30,19 +30,13 @@ final class ShopsController
         return Response::ok(["shop" => $response]);
     }
 
-    /** GET /shops/phone/{phone} */
-    public function getByPhone(string $phone): Response
+    public function updateGeneral(Request $request, string $shopId): Response
     {
-        $phone = trim($phone);
-
-        if ($phone === '') {
-            throw new ValidationException(['phone' => 'phone is required']);
-        }
-
         try {
             $response = $this->serviceClient->call(
-                'shop_get_by_phone',
-                ['phone' => $phone],
+                'shop_update_general',
+                ['shop_id' => $shopId],
+                $request->body,
             );
         } catch (ServiceException $ex) {
             return Response::error($ex->statusCode(), ["error" => $ex->getMessage()]);
