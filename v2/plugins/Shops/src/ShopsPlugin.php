@@ -12,6 +12,7 @@ use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Plugin\AbstractPlugin;
 use Pmsrapi\V2\Plugin\PluginRegistrar;
 use Pmsrapi\V2\Plugin\PluginRouter;
+use Pmsrapi\V2\Support\ShopContext;
 
 final class ShopsPlugin extends AbstractPlugin
 {
@@ -27,10 +28,15 @@ final class ShopsPlugin extends AbstractPlugin
 
     public function routes(PluginRouter $router, Container $container): void
     {
-        $router->get('/phone/{phone}', static fn(Request $request, array $params): Response
-            => $container->get(ShopsController::class)->getByPhone($params['phone']));
 
-        $router->get('/{id}', static fn(Request $request, array $params): Response
-            => $container->get(ShopsController::class)->getById($params['id']));
+        $router->get('/{shop_id}', ShopContext::wrap(
+            static fn(Request $request, array $params): Response
+                => $container->get(ShopsController::class)->getShop($params['shop_id']),
+        ));
+
+        $router->patch('/{shop_id}/general', ShopContext::wrap(
+            static fn(Request $request, array $params): Response
+                => $container->get(ShopsController::class)->updateGeneral($request, $params['shop_id']),
+        ));
     }
 }
