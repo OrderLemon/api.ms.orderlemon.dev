@@ -21,7 +21,7 @@ final class ShopsController
         try {
             $response = $this->serviceClient->call(
                 'shop_get',
-                ['shop_id' => $shopId],
+                ['id' => $shopId],
             );
         } catch (ServiceException $ex) {
             return Response::error($ex->statusCode(), ["error" => $ex->getMessage()]);
@@ -35,7 +35,7 @@ final class ShopsController
         try {
             $response = $this->serviceClient->call(
                 'shop_update_general',
-                ['shop_id' => $shopId],
+                ['id' => $shopId],
                 $request->body,
             );
         } catch (ServiceException $ex) {
