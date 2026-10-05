@@ -21,7 +21,7 @@ final class ShopsController
         try {
             $response = $this->serviceClient->call(
                 'shop_get',
-                ['shop_id' => $shopId],
+                ['id' => $shopId],
             );
         } catch (ServiceException $ex) {
             return Response::error($ex->statusCode(), ["error" => $ex->getMessage()]);
@@ -35,7 +35,7 @@ final class ShopsController
         try {
             $response = $this->serviceClient->call(
                 'shop_update_general',
-                ['shop_id' => $shopId],
+                ['id' => $shopId],
                 $request->body,
             );
         } catch (ServiceException $ex) {
@@ -43,5 +43,35 @@ final class ShopsController
         }
 
         return Response::ok(["shop" => $response]);
+    }
+
+    public function getSettings(string $shopId): Response
+    {
+        try {
+            $response = $this->serviceClient->call(
+                'shop_settings_get',
+                ['id' => $shopId],
+            );
+        } catch (ServiceException $ex) {
+            return Response::error($ex->statusCode(), ["error" => $ex->getMessage()]);
+        }
+
+        return Response::ok(["settings" => $response]);
+    }
+
+    public function updateSettings(Request $request, string $shopId): Response
+    {
+        try {
+            $response = $this->serviceClient->call(
+                'shop_settings_update',
+                ['id' => $shopId],
+                $request->body,
+            );
+        } catch (ServiceException $ex) {
+            return Response::error($ex->statusCode(), ["error" => $ex->getMessage()]);
+        }
+
+        // shop.ms answers 200 with success:false when nothing changed.
+        return Response::ok(["updated" => ($response['success'] ?? true) !== false]);
     }
 }
