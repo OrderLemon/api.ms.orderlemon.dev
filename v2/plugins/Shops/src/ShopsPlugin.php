@@ -38,5 +38,15 @@ final class ShopsPlugin extends AbstractPlugin
             static fn(Request $request, array $params): Response
                 => $container->get(ShopsController::class)->updateGeneral($request, $params['shop_id']),
         ));
+
+        $router->get('/{shop_id}/settings', ShopContext::wrap(
+            static fn(Request $request, array $params): Response
+                => $container->get(ShopsController::class)->getSettings($params['shop_id']),
+        ));
+
+        $router->patch('/{shop_id}/settings', ShopContext::wrap(
+            static fn(Request $request, array $params): Response
+                => $container->get(ShopsController::class)->updateSettings($request, $params['shop_id']),
+        ));
     }
 }
