@@ -13,17 +13,15 @@ use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Support\Logger;
 
 /**
- * Proxies merchant Sign in with Apple to login.ms, which exchanges the code with Apple,
- * verifies the token and matches the email to users.email.
+ * Proxies user sign-in (Apple, Google) to login.ms, which verifies the provider's token
+ * and matches the email to users.email.
  *
  * Uses ServiceClient::stream() rather than call(): call() drops the error body on 4xx,
  * and the frontend needs login.ms's error code (no_account, email_ambiguous, …) to tell
- * the merchant what went wrong.
+ * the user what went wrong.
  */
-final class AppleController
+final class SignInController
 {
-    private const string FUNCTION = 'auth_apple_login';
-
     /** login.ms error code => status returned to the browser. Anything else becomes 502. */
     private const array STATUS_BY_ERROR_CODE = [
         'validation_failed' => 422,
@@ -41,7 +39,7 @@ final class AppleController
     ) {}
 
     /** POST /v2/auth/apple  {code, nonce, client_id?} */
-    public function login(Request $request): Response
+    public function apple(Request $request): Response
     {
         $body = $request->body;
 
@@ -54,28 +52,39 @@ final class AppleController
             $payload['client_id'] = $this->requireString($body, 'client_id', 255);
         }
 
-        return $this->call($payload);
+        return $this->call('auth_apple_login', $payload);
+    }
+
+    /** POST /v2/auth/google  {id_token, nonce} */
+    public function google(Request $request): Response
+    {
+        $body = $request->body;
+
+        return $this->call('auth_google_login', [
+            'id_token' => $this->requireString($body, 'id_token', 8192),
+            'nonce' => $this->requireString($body, 'nonce', 4096),
+        ]);
     }
 
     /**
      * @param array<string, string> $payload
      */
-    private function call(array $payload): Response
+    private function call(string $function, array $payload): Response
     {
         $envelope = null;
-        foreach ($this->serviceClient->stream(self::FUNCTION, [], $payload) as $record) {
+        foreach ($this->serviceClient->stream($function, [], $payload) as $record) {
             $envelope = $record;
             break; // exactly one record expected: the whole response body.
         }
 
         if (!is_array($envelope)) {
-            $this->logger->error('Empty or non-object response from login.ms', ['function' => self::FUNCTION]);
+            $this->logger->error('Empty or non-object response from login.ms', ['function' => $function]);
 
             throw new ServiceException('Sign-in service returned no response');
         }
 
         if (!($envelope['success'] ?? false)) {
-            $this->throwFor(is_array($envelope['error'] ?? null) ? $envelope['error'] : []);
+            $this->throwFor($function, is_array($envelope['error'] ?? null) ? $envelope['error'] : []);
         }
 
         return Response::ok(is_array($envelope['data'] ?? null) ? $envelope['data'] : []);
@@ -84,15 +93,15 @@ final class AppleController
     /**
      * @param array<string, mixed> $error
      */
-    private function throwFor(array $error): never
+    private function throwFor(string $function, array $error): never
     {
         $code = is_string($error['code'] ?? null) ? $error['code'] : 'service_error';
         $status = self::STATUS_BY_ERROR_CODE[$code] ?? null;
 
         if ($status === null) {
-            // A login.ms or configuration problem (bad service token, missing Apple config, …):
+            // A login.ms or configuration problem (bad service token, missing provider config, …):
             // log the real reason, show the browser a generic failure.
-            $this->logger->error('Apple sign-in failed in login.ms', ['error' => $error]);
+            $this->logger->error('Sign-in failed in login.ms', ['function' => $function, 'error' => $error]);
 
             throw new ServiceException('Sign-in is temporarily unavailable');
         }

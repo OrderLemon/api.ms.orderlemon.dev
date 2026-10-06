@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\Auth;
 
-use Plugins\Auth\Controllers\AppleController;
+use Plugins\Auth\Controllers\SignInController;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Core\Container;
 use Pmsrapi\V2\Http\Request;
@@ -19,8 +19,8 @@ final class AuthPlugin extends AbstractPlugin
     public function register(PluginRegistrar $registrar): void
     {
         $registrar->singleton(
-            AppleController::class,
-            static fn(Container $container): AppleController => new AppleController(
+            SignInController::class,
+            static fn(Container $container): SignInController => new SignInController(
                 $container->get(ServiceClient::class),
                 $container->get(Logger::class),
             ),
@@ -30,6 +30,9 @@ final class AuthPlugin extends AbstractPlugin
     public function routes(PluginRouter $router, Container $container): void
     {
         $router->post('/apple', static fn(Request $request): Response
-            => $container->get(AppleController::class)->login($request));
+            => $container->get(SignInController::class)->apple($request));
+
+        $router->post('/google', static fn(Request $request): Response
+            => $container->get(SignInController::class)->google($request));
     }
 }
