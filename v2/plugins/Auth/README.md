@@ -8,10 +8,28 @@ for the full guide: provider setup, frontend code and troubleshooting.
 
 | Endpoint | Body | Forwards to |
 |---|---|---|
+| `GET /v2/auth/config` | | `auth_config` |
 | `POST /v2/auth/apple` | `code` (from Apple's popup), `nonce` (the **raw** value), `client_id?` | `auth_apple_login` |
 | `POST /v2/auth/google` | `id_token` (Google's `credential`), `nonce` (the **raw** value) | `auth_google_login` |
 
 Only these fields are forwarded, never the raw request body.
+
+### `GET /v2/auth/config`
+
+Called by the frontend on page load. Returns the public settings for each configured provider; a provider that
+isn't configured is left out (hide its button). With nothing configured, `data` is `{}`.
+
+```json
+{
+  "success": true,
+  "data": {
+    "apple":  { "client_id": "com.orderlemon.signin", "redirect_uri": "https://app.orderlemon.com/auth/apple/callback" },
+    "google": { "client_id": "1234-abc.apps.googleusercontent.com" }
+  }
+}
+```
+
+### Sign-in results
 
 | Result | Meaning for the UI |
 |---|---|
@@ -30,6 +48,7 @@ Only these fields are forwarded, never the raw request body.
     { "name": "login.ms", "ip": "<login-ms-host>", "port": 443, "token": "<login.ms ms_server_token>", "ssl": true }
 ],
 "function_map": {
+    "auth_config":       { "service": "login.ms", "method": "GET",  "path": "/auth/config" },
     "auth_apple_login":  { "service": "login.ms", "method": "POST", "path": "/auth/apple/login" },
     "auth_google_login": { "service": "login.ms", "method": "POST", "path": "/auth/google/login" }
 }

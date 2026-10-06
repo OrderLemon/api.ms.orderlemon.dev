@@ -14,7 +14,8 @@ use Pmsrapi\V2\Support\Logger;
 
 /**
  * Proxies user sign-in (Apple, Google) to login.ms, which verifies the provider's token
- * and matches the email to users.email.
+ * and matches the email to users.email, plus the public provider config the frontend
+ * loads on page load.
  *
  * Uses ServiceClient::stream() rather than call(): call() drops the error body on 4xx,
  * and the frontend needs login.ms's error code (no_account, email_ambiguous, …) to tell
@@ -38,6 +39,11 @@ final class SignInController
         private readonly Logger $logger,
     ) {}
 
+    public function config(): Response
+    {
+        return Response::ok((object) $this->call('auth_config', []));
+    }
+
     /** POST /v2/auth/apple  {code, nonce, client_id?} */
     public function apple(Request $request): Response
     {
@@ -52,7 +58,7 @@ final class SignInController
             $payload['client_id'] = $this->requireString($body, 'client_id', 255);
         }
 
-        return $this->call('auth_apple_login', $payload);
+        return Response::ok($this->call('auth_apple_login', $payload));
     }
 
     /** POST /v2/auth/google  {id_token, nonce} */
@@ -60,16 +66,19 @@ final class SignInController
     {
         $body = $request->body;
 
-        return $this->call('auth_google_login', [
+        return Response::ok($this->call('auth_google_login', [
             'id_token' => $this->requireString($body, 'id_token', 8192),
             'nonce' => $this->requireString($body, 'nonce', 4096),
-        ]);
+        ]));
     }
 
     /**
+     * Calls login.ms and returns its `data`, or throws its error with the right status.
+     *
      * @param array<string, string> $payload
+     * @return array<string, mixed>
      */
-    private function call(string $function, array $payload): Response
+    private function call(string $function, array $payload): array
     {
         $envelope = null;
         foreach ($this->serviceClient->stream($function, [], $payload) as $record) {
@@ -87,7 +96,7 @@ final class SignInController
             $this->throwFor($function, is_array($envelope['error'] ?? null) ? $envelope['error'] : []);
         }
 
-        return Response::ok(is_array($envelope['data'] ?? null) ? $envelope['data'] : []);
+        return is_array($envelope['data'] ?? null) ? $envelope['data'] : [];
     }
 
     /**

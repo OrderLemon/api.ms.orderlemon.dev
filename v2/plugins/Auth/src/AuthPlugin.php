@@ -29,6 +29,9 @@ final class AuthPlugin extends AbstractPlugin
 
     public function routes(PluginRouter $router, Container $container): void
     {
+        $router->get('/config', static fn(Request $request): Response
+            => $container->get(SignInController::class)->config());
+
         $router->post('/apple', static fn(Request $request): Response
             => $container->get(SignInController::class)->apple($request));
 
