@@ -1,38 +1,36 @@
 # Auth plugin
 
-Public entry point for merchant sign-in. The browser calls this gateway; the gateway forwards to
-login.ms (never exposed), which does the real work. See login.ms's `v2/plugins/Auth/README.md` for
-the full flow and the browser code.
+Public entry point for user sign-in with Apple and Google. The browser calls this gateway; the gateway
+forwards to login.ms (never exposed), which does the real work. See login.ms's `v2/plugins/Auth/README.md`
+for the full guide: provider setup, frontend code and troubleshooting.
 
-## Endpoint
+## Endpoints
 
-`POST /v2/auth/apple` with body:
+| Endpoint | Body | Forwards to |
+|---|---|---|
+| `POST /v2/auth/apple` | `code` (from Apple's popup), `nonce` (the **raw** value), `client_id?` | `auth_apple_login` |
+| `POST /v2/auth/google` | `id_token` (Google's `credential`), `nonce` (the **raw** value) | `auth_google_login` |
 
-| Field | |
-|---|---|
-| `code` | `authorization.code` from Apple's JS popup |
-| `nonce` | the **raw** nonce the browser kept in memory (Apple only saw its SHA-256) |
-| `client_id` | optional; defaults to login.ms's `default_client_id` |
+Only these fields are forwarded, never the raw request body.
 
 | Result | Meaning for the UI |
 |---|---|
-| `200` + merchant | Signed in |
-| `404 no_account` | No merchant with this Apple email. If `details.is_private_email` is true, ask them to sign in again and choose "Share My Email". |
-| `409 email_ambiguous` | Several merchants share this email; contact support |
-| `403 account_disabled` | Merchant account is disabled |
-| `401 invalid_token` / `apple_invalid_code` | Code expired, already used, or nonce mismatch; restart sign-in |
+| `200` + user | Signed in |
+| `404 no_account` | No user with this email. Apple: if `details.is_private_email` is true, ask them to sign in again and choose "Share My Email". |
+| `409 email_ambiguous` | Several users share this email; contact support |
+| `403 account_disabled` | User account is disabled |
+| `401 invalid_token` / `apple_invalid_code` | Expired, reused or forged token/code, or nonce mismatch; restart sign-in |
 | `422 validation_failed` | Missing or malformed fields |
 | `502 service_error` | login.ms or its configuration failed (the reason is logged here, not shown) |
 
 ## Secret config (api.ms)
-
-Add login.ms to `universe` and map the function:
 
 ```json
 "universe": [
     { "name": "login.ms", "ip": "<login-ms-host>", "port": 443, "token": "<login.ms ms_server_token>", "ssl": true }
 ],
 "function_map": {
-    "auth_apple_login": { "service": "login.ms", "method": "POST", "path": "/auth/apple/login" }
+    "auth_apple_login":  { "service": "login.ms", "method": "POST", "path": "/auth/apple/login" },
+    "auth_google_login": { "service": "login.ms", "method": "POST", "path": "/auth/google/login" }
 }
 ```
