@@ -1,0 +1,9 @@
+{
+    "name": "Auth",
+    "slug": "auth",
+    "description": "Merchant sign-in, proxied to login.ms.",
+    "version": "1.0.0",
+    "author": "Order Lemon",
+    "enabled": true,
+    "dependencies": []
+}

@@ -1,0 +1,120 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Plugins\Auth\Controllers;
+
+use Pmsrapi\V2\Cluster\ServiceClient;
+use Pmsrapi\V2\Exception\ApiException;
+use Pmsrapi\V2\Exception\ServiceException;
+use Pmsrapi\V2\Exception\ValidationException;
+use Pmsrapi\V2\Http\Request;
+use Pmsrapi\V2\Http\Response;
+use Pmsrapi\V2\Support\Logger;
+
+/**
+ * Proxies merchant Sign in with Apple to login.ms, which exchanges the code with Apple,
+ * verifies the token and matches the email to users.email.
+ *
+ * Uses ServiceClient::stream() rather than call(): call() drops the error body on 4xx,
+ * and the frontend needs login.ms's error code (no_account, email_ambiguous, …) to tell
+ * the merchant what went wrong.
+ */
+final class AppleController
+{
+    private const string FUNCTION = 'auth_apple_login';
+
+    /** login.ms error code => status returned to the browser. Anything else becomes 502. */
+    private const array STATUS_BY_ERROR_CODE = [
+        'validation_failed' => 422,
+        'invalid_token' => 401,
+        'apple_invalid_code' => 401,
+        'account_disabled' => 403,
+        'no_account' => 404,
+        'email_ambiguous' => 409,
+        'rate_limited' => 429,
+    ];
+
+    public function __construct(
+        private readonly ServiceClient $serviceClient,
+        private readonly Logger $logger,
+    ) {}
+
+    /** POST /v2/auth/apple  {code, nonce, client_id?} */
+    public function login(Request $request): Response
+    {
+        $body = $request->body;
+
+        // Forward only the known fields, never the raw body.
+        $payload = [
+            'code' => $this->requireString($body, 'code', 4096),
+            'nonce' => $this->requireString($body, 'nonce', 4096),
+        ];
+        if (isset($body['client_id'])) {
+            $payload['client_id'] = $this->requireString($body, 'client_id', 255);
+        }
+
+        return $this->call($payload);
+    }
+
+    /**
+     * @param array<string, string> $payload
+     */
+    private function call(array $payload): Response
+    {
+        $envelope = null;
+        foreach ($this->serviceClient->stream(self::FUNCTION, [], $payload) as $record) {
+            $envelope = $record;
+            break; // exactly one record expected: the whole response body.
+        }
+
+        if (!is_array($envelope)) {
+            $this->logger->error('Empty or non-object response from login.ms', ['function' => self::FUNCTION]);
+
+            throw new ServiceException('Sign-in service returned no response');
+        }
+
+        if (!($envelope['success'] ?? false)) {
+            $this->throwFor(is_array($envelope['error'] ?? null) ? $envelope['error'] : []);
+        }
+
+        return Response::ok(is_array($envelope['data'] ?? null) ? $envelope['data'] : []);
+    }
+
+    /**
+     * @param array<string, mixed> $error
+     */
+    private function throwFor(array $error): never
+    {
+        $code = is_string($error['code'] ?? null) ? $error['code'] : 'service_error';
+        $status = self::STATUS_BY_ERROR_CODE[$code] ?? null;
+
+        if ($status === null) {
+            // A login.ms or configuration problem (bad service token, missing Apple config, …):
+            // log the real reason, show the browser a generic failure.
+            $this->logger->error('Apple sign-in failed in login.ms', ['error' => $error]);
+
+            throw new ServiceException('Sign-in is temporarily unavailable');
+        }
+
+        $message = is_string($error['message'] ?? null) ? $error['message'] : 'Sign-in failed';
+        $details = is_array($error['details'] ?? null) ? $error['details'] : [];
+
+        throw new ApiException($message, $status, $code, $details);
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     */
+    private function requireString(array $body, string $field, int $maxLength): string
+    {
+        $value = $body[$field] ?? null;
+        if (!is_string($value) || trim($value) === '') {
+            throw new ValidationException([$field => "{$field} is required"]);
+        }
+        if (strlen($value) > $maxLength) {
+            throw new ValidationException([$field => "{$field} is too long"]);
+        }
+        return trim($value);
+    }
+}
