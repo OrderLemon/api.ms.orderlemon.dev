@@ -16,6 +16,20 @@ final class ShopsController
         private readonly ServiceClient $serviceClient,
     ) {}
 
+    public function listByCompany(string $companyId): Response
+    {
+        try {
+            $response = $this->serviceClient->call(
+                'shop_list_by_company',
+                ['company_id' => $companyId],
+            );
+        } catch (ServiceException $ex) {
+            return Response::error($ex->statusCode(), ["error" => $ex->getMessage()]);
+        }
+
+        return Response::ok(["shops" => $response]);
+    }
+
     public function getShop(string $shopId): Response
     {
         try {

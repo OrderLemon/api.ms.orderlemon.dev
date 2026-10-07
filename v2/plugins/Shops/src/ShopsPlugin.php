@@ -28,6 +28,8 @@ final class ShopsPlugin extends AbstractPlugin
 
     public function routes(PluginRouter $router, Container $container): void
     {
+        $router->get('/company/{company_id}', static fn(Request $request, array $params): Response
+            => $container->get(ShopsController::class)->listByCompany($params['company_id']));
 
         $router->get('/{shop_id}', ShopContext::wrap(
             static fn(Request $request, array $params): Response
