@@ -74,4 +74,33 @@ final class ShopsController
         // shop.ms answers 200 with success:false when nothing changed.
         return Response::ok(["updated" => ($response['success'] ?? true) !== false]);
     }
+
+    public function getCalendar(string $shopId): Response
+    {
+        try {
+            $response = $this->serviceClient->call(
+                'shop_calendar_get',
+                ['id' => $shopId],
+            );
+        } catch (ServiceException $ex) {
+            return Response::error($ex->statusCode(), ["error" => $ex->getMessage()]);
+        }
+
+        return Response::ok(["calendar" => $response]);
+    }
+
+    public function updateCalendar(Request $request, string $shopId): Response
+    {
+        try {
+            $response = $this->serviceClient->call(
+                'shop_calendar_update',
+                ['id' => $shopId],
+                $request->body,
+            );
+        } catch (ServiceException $ex) {
+            return Response::error($ex->statusCode(), ["error" => $ex->getMessage()]);
+        }
+
+        return Response::ok(["updated" => (bool) ($response['updated'] ?? false)]);
+    }
 }
