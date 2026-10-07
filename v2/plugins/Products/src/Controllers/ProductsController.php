@@ -179,7 +179,8 @@ final class ProductsController
         if ($hasErrors) {
             $this->fail(
                 new ValidationException($friendly, 'Some of the information provided is invalid.'),
-                ['errors' => $technical, 'body' => $body],
+                // images can be tens of MB of base64; keep them out of the log.
+                ['errors' => $technical, 'body' => array_diff_key($body, ['images' => true])],
             );
         }
     }

@@ -48,5 +48,15 @@ final class ShopsPlugin extends AbstractPlugin
             static fn(Request $request, array $params): Response
                 => $container->get(ShopsController::class)->updateSettings($request, $params['shop_id']),
         ));
+
+        $router->get('/{shop_id}/calendar', ShopContext::wrap(
+            static fn(Request $request, array $params): Response
+                => $container->get(ShopsController::class)->getCalendar($params['shop_id']),
+        ));
+
+        $router->patch('/{shop_id}/calendar', ShopContext::wrap(
+            static fn(Request $request, array $params): Response
+                => $container->get(ShopsController::class)->updateCalendar($request, $params['shop_id']),
+        ));
     }
 }
