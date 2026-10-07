@@ -1,0 +1,9 @@
+{
+    "name": "Home",
+    "slug": "home",
+    "description": "Dashboard home: badge numbers and shop state collected from the owning services' summary endpoints.",
+    "version": "1.0.0",
+    "author": "PMSRAPI",
+    "enabled": true,
+    "dependencies": []
+}
