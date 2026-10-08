@@ -7,15 +7,23 @@ namespace Plugins\Auth\Controllers;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Exception\ApiException;
 use Pmsrapi\V2\Exception\ServiceException;
+use Pmsrapi\V2\Exception\UnauthorizedException;
 use Pmsrapi\V2\Exception\ValidationException;
 use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
+use Pmsrapi\V2\Security\TokenStore;
 use Pmsrapi\V2\Support\Logger;
 
 /**
- * Proxies user sign-in (Apple, Google) to login.ms, which verifies the provider's token
- * and matches the email to users.email, plus the public provider config the frontend
- * loads on page load.
+ * Proxies user sign-in (Apple, Google, email + password) to login.ms, which verifies the
+ * credentials, matches the email to users.email and creates a device session; plus the public
+ * provider config the frontend loads on page load, and logout.
+ *
+ * Sessions: login.ms returns a device token (its hash is stored in devices_{company_id}).
+ * This gateway registers the token in the core TokenStore WITHOUT expiry, so the core
+ * AuthMiddleware accepts it as `Authorization: Bearer <token>` on every later request.
+ * TokenStore::claims() then gives the company_id; the user is the devices_{company_id} row whose
+ * device_uuid is the token's SHA-256.
  *
  * Uses ServiceClient::stream() rather than call(): call() drops the error body on 4xx,
  * and the frontend needs login.ms's error code (no_account, email_ambiguous, …) to tell
@@ -31,22 +39,29 @@ final class SignInController
         'invalid_credentials' => 401,
         'password_login_unavailable' => 503,
         'account_disabled' => 403,
+        'no_company' => 403,
         'no_account' => 404,
         'email_ambiguous' => 409,
         'rate_limited' => 429,
     ];
 
+    /** Optional device details forwarded with every sign-in => max length. */
+    private const array DEVICE_FIELDS = ['os' => 100, 'app_ver' => 8, 'language' => 2, 'one_signal_id' => 50];
+
     public function __construct(
         private readonly ServiceClient $serviceClient,
+        private readonly TokenStore $tokens,
         private readonly Logger $logger,
     ) {}
 
+    /** GET /v2/auth/config  → { apple?: {client_id, redirect_uri}, google?: {client_id} } */
     public function config(): Response
     {
+        // Always a JSON object, even with no providers ({} not []), so the frontend can read config.apple.
         return Response::ok((object) $this->call('auth_config', []));
     }
 
-    /** POST /v2/auth/apple  {code, nonce, client_id?} */
+    /** POST /v2/auth/apple  {code, nonce, client_id?, os?, app_ver?, language?, one_signal_id?} */
     public function apple(Request $request): Response
     {
         $body = $request->body;
@@ -60,21 +75,21 @@ final class SignInController
             $payload['client_id'] = $this->requireString($body, 'client_id', 255);
         }
 
-        return Response::ok($this->call('auth_apple_login', $payload));
+        return $this->signIn('auth_apple_login', $payload + $this->deviceFields($body));
     }
 
-    /** POST /v2/auth/google  {id_token, nonce} */
+    /** POST /v2/auth/google  {id_token, nonce, os?, app_ver?, language?, one_signal_id?} */
     public function google(Request $request): Response
     {
         $body = $request->body;
 
-        return Response::ok($this->call('auth_google_login', [
+        return $this->signIn('auth_google_login', [
             'id_token' => $this->requireString($body, 'id_token', 8192),
             'nonce' => $this->requireString($body, 'nonce', 4096),
-        ]));
+        ] + $this->deviceFields($body));
     }
 
-    /** POST /v2/auth/password  {email, password} */
+    /** POST /v2/auth/password  {email, password, os?, app_ver?, language?, one_signal_id?} */
     public function password(Request $request): Response
     {
         $body = $request->body;
@@ -88,16 +103,85 @@ final class SignInController
             throw new ValidationException(['password' => 'password is too long']);
         }
 
-        return Response::ok($this->call('auth_password_login', [
+        return $this->signIn('auth_password_login', [
             'email' => $this->requireString($body, 'email', 320),
             'password' => $password,
-        ]));
+        ] + $this->deviceFields($body));
+    }
+
+    /** POST /v2/auth/logout  (Authorization: Bearer <device token>) */
+    public function logout(Request $request): Response
+    {
+        $token = (string) $request->bearerToken();
+        $companyId = $this->tokens->claims($token)['company_id'] ?? null;
+        if (!is_int($companyId)) {
+            // The static service token, or a token that isn't a device session.
+            throw new UnauthorizedException('Not a device session');
+        }
+
+        // Revoke first: even if login.ms is unreachable, this device can no longer call the API.
+        $this->tokens->revoke($token);
+        $this->call('auth_logout', ['token' => $token, 'company_id' => $companyId]);
+
+        return Response::ok(['logged_out' => true]);
+    }
+
+    /**
+     * Signs in through login.ms and registers the returned device token so the core accepts it.
+     *
+     * @param array<string, string> $payload
+     */
+    private function signIn(string $function, array $payload): Response
+    {
+        $result = $this->call($function, $payload);
+
+        $user = $result['user'] ?? null;
+        $token = $result['token'] ?? null;
+        if (!is_array($user) || !is_string($token) || $token === '') {
+            $this->logger->error('Sign-in response from login.ms has no user/token', ['function' => $function]);
+            throw new ServiceException('Sign-in is temporarily unavailable');
+        }
+
+        // No TTL: the session lasts until logout (requires a persistent Redis; see README).
+        $this->tokens->issue($token, ['company_id' => (int) ($user['company_id'] ?? 0)]);
+
+        if (!$this->tokens->isValid($token)) {
+            $this->logger->error('Could not register session token (is Redis configured?)', ['function' => $function]);
+            $this->endOrphanedSession($token, (int) ($user['company_id'] ?? 0));
+            throw new ApiException('Sessions are temporarily unavailable', 503, 'sessions_unavailable');
+        }
+
+        return Response::ok(['user' => $user, 'token' => $token]);
+    }
+
+    private function endOrphanedSession(string $token, int $companyId): void
+    {
+        try {
+            $this->call('auth_logout', ['token' => $token, 'company_id' => $companyId]);
+        } catch (ApiException $e) {
+            $this->logger->error('Could not delete orphaned device row', ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return array<string, string>
+     */
+    private function deviceFields(array $body): array
+    {
+        $fields = [];
+        foreach (self::DEVICE_FIELDS as $field => $maxLength) {
+            if (isset($body[$field])) {
+                $fields[$field] = $this->requireString($body, $field, $maxLength);
+            }
+        }
+        return $fields;
     }
 
     /**
      * Calls login.ms and returns its `data`, or throws its error with the right status.
      *
-     * @param array<string, string> $payload
+     * @param array<string, scalar> $payload
      * @return array<string, mixed>
      */
     private function call(string $function, array $payload): array
