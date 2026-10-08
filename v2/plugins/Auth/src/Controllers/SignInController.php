@@ -17,7 +17,10 @@ use Pmsrapi\V2\Support\Logger;
 /**
  * Proxies user sign-in (Apple, Google, email + password) to login.ms, which verifies the
  * credentials, matches the email to users.email and creates a device session; plus the public
- * provider config the frontend loads on page load, and logout.
+ * provider config, and logout.
+ *
+ * The sign-in methods and providerConfig() are called by GuestAuthHandler behind the public
+ * /auth.php entry point (guest-token protected); only logout is a /v2 route.
  *
  * Sessions: login.ms returns a device token (its hash is stored in devices_{company_id}).
  * This gateway registers the token in the core TokenStore WITHOUT expiry, so the core
@@ -54,14 +57,16 @@ final class SignInController
         private readonly Logger $logger,
     ) {}
 
-    /** GET /v2/auth/config  → { apple?: {client_id, redirect_uri}, google?: {client_id} } */
-    public function config(): Response
+    /**
+     * Public provider settings: { apple?: {client_id, redirect_uri}, google?: {client_id} }.
+     * Always an object, even with no providers ({} not []), so the frontend can read config.apple.
+     */
+    public function providerConfig(): object
     {
-        // Always a JSON object, even with no providers ({} not []), so the frontend can read config.apple.
-        return Response::ok((object) $this->call('auth_config', []));
+        return (object) $this->call('auth_config', []);
     }
 
-    /** POST /v2/auth/apple  {code, nonce, client_id?, os?, app_ver?, language?, one_signal_id?} */
+    /** /auth.php?a=apple  {code, nonce, client_id?, os?, app_ver?, language?, one_signal_id?} */
     public function apple(Request $request): Response
     {
         $body = $request->body;
@@ -78,7 +83,7 @@ final class SignInController
         return $this->signIn('auth_apple_login', $payload + $this->deviceFields($body));
     }
 
-    /** POST /v2/auth/google  {id_token, nonce, os?, app_ver?, language?, one_signal_id?} */
+    /** /auth.php?a=google  {id_token, nonce, os?, app_ver?, language?, one_signal_id?} */
     public function google(Request $request): Response
     {
         $body = $request->body;
@@ -89,7 +94,7 @@ final class SignInController
         ] + $this->deviceFields($body));
     }
 
-    /** POST /v2/auth/password  {email, password, os?, app_ver?, language?, one_signal_id?} */
+    /** /auth.php?a=password  {email, password, os?, app_ver?, language?, one_signal_id?} */
     public function password(Request $request): Response
     {
         $body = $request->body;
