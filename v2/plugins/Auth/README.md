@@ -11,8 +11,13 @@ for the full guide: provider setup, frontend code and troubleshooting.
 | `GET /v2/auth/config` | | `auth_config` |
 | `POST /v2/auth/apple` | `code` (from Apple's popup), `nonce` (the **raw** value), `client_id?` | `auth_apple_login` |
 | `POST /v2/auth/google` | `id_token` (Google's `credential`), `nonce` (the **raw** value) | `auth_google_login` |
+| `POST /v2/auth/password` | `email`, `password` | `auth_password_login` |
 
-Only these fields are forwarded, never the raw request body.
+Only these fields are forwarded, never the raw request body. The password is never logged.
+
+⚠ **`POST /v2/auth/password` doesn't check the password yet** (`users` has no password column). login.ms only
+allows it on non-production environments with an explicit flag; otherwise it returns
+`503 password_login_unavailable`. See login.ms's README, section 6.5.
 
 ### `GET /v2/auth/config`
 
@@ -38,6 +43,8 @@ isn't configured is left out (hide its button). With nothing configured, `data` 
 | `409 email_ambiguous` | Several users share this email; contact support |
 | `403 account_disabled` | User account is disabled |
 | `401 invalid_token` / `apple_invalid_code` | Expired, reused or forged token/code, or nonce mismatch; restart sign-in |
+| `401 invalid_credentials` | Password sign-in: email or password wrong (deliberately not saying which) |
+| `503 password_login_unavailable` | Password sign-in isn't enabled on this environment |
 | `422 validation_failed` | Missing or malformed fields |
 | `502 service_error` | login.ms or its configuration failed (the reason is logged here, not shown) |
 
@@ -50,6 +57,7 @@ isn't configured is left out (hide its button). With nothing configured, `data` 
 "function_map": {
     "auth_config":       { "service": "login.ms", "method": "GET",  "path": "/auth/config" },
     "auth_apple_login":  { "service": "login.ms", "method": "POST", "path": "/auth/apple/login" },
-    "auth_google_login": { "service": "login.ms", "method": "POST", "path": "/auth/google/login" }
+    "auth_google_login": { "service": "login.ms", "method": "POST", "path": "/auth/google/login" },
+    "auth_password_login": { "service": "login.ms", "method": "POST", "path": "/auth/password/login" }
 }
 ```
