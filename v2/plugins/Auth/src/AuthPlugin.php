@@ -12,6 +12,7 @@ use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Plugin\AbstractPlugin;
 use Pmsrapi\V2\Plugin\PluginRegistrar;
 use Pmsrapi\V2\Plugin\PluginRouter;
+use Pmsrapi\V2\Security\TokenStore;
 use Pmsrapi\V2\Support\Logger;
 
 final class AuthPlugin extends AbstractPlugin
@@ -22,6 +23,7 @@ final class AuthPlugin extends AbstractPlugin
             SignInController::class,
             static fn(Container $container): SignInController => new SignInController(
                 $container->get(ServiceClient::class),
+                $container->get(TokenStore::class),
                 $container->get(Logger::class),
             ),
         );
@@ -40,5 +42,8 @@ final class AuthPlugin extends AbstractPlugin
 
         $router->post('/password', static fn(Request $request): Response
             => $container->get(SignInController::class)->password($request));
+
+        $router->post('/logout', static fn(Request $request): Response
+            => $container->get(SignInController::class)->logout($request));
     }
 }

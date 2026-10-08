@@ -12,8 +12,23 @@ for the full guide: provider setup, frontend code and troubleshooting.
 | `POST /v2/auth/apple` | `code` (from Apple's popup), `nonce` (the **raw** value), `client_id?` | `auth_apple_login` |
 | `POST /v2/auth/google` | `id_token` (Google's `credential`), `nonce` (the **raw** value) | `auth_google_login` |
 | `POST /v2/auth/password` | `email`, `password` | `auth_password_login` |
+| `POST /v2/auth/logout` | (none; `Authorization: Bearer <device token>`) | `auth_logout` |
 
-Only these fields are forwarded, never the raw request body. The password is never logged.
+Every sign-in endpoint also accepts optional `os`, `app_ver`, `language`, `one_signal_id`. Only these fields are
+forwarded, never the raw request body. The password is never logged.
+
+### Device sessions
+
+A successful sign-in returns `{ "user": {…}, "token": "…" }`. login.ms stores the token's hash in
+`devices_{company_id}`; this plugin registers the token in the core `TokenStore` **without expiry**, with claims
+`{company_id}`. The core `AuthMiddleware` then accepts `Authorization: Bearer <token>` on every
+request, and `TokenStore::claims($request->bearerToken())` gives the `company_id`; the user is the `devices_{company_id}` row whose `device_uuid` is the token's SHA-256.
+
+Logout revokes the token in `TokenStore`, then login.ms deletes the device row. If `TokenStore` can't store the
+token (Redis off), sign-in answers `503 sessions_unavailable` and the device row is removed again.
+
+**Redis requirements:** persistent (`appendonly yes`), and `maxmemory-policy` not `allkeys-*`
+(use `volatile-lru` or `noeviction`), otherwise sessions can disappear. See login.ms's README, section 6.6.
 
 ⚠ **`POST /v2/auth/password` doesn't check the password yet** (`users` has no password column). login.ms only
 allows it on non-production environments with an explicit flag; otherwise it returns
@@ -38,7 +53,9 @@ isn't configured is left out (hide its button). With nothing configured, `data` 
 
 | Result | Meaning for the UI |
 |---|---|
-| `200` + user | Signed in |
+| `200` + `{user, token}` | Signed in; use `token` as the bearer from now on |
+| `403 no_company` | The user has no company, so no device session can be created |
+| `503 sessions_unavailable` | Redis/TokenStore isn't working on api.ms |
 | `404 no_account` | No user with this email. Apple: if `details.is_private_email` is true, ask them to sign in again and choose "Share My Email". |
 | `409 email_ambiguous` | Several users share this email; contact support |
 | `403 account_disabled` | User account is disabled |
@@ -58,6 +75,7 @@ isn't configured is left out (hide its button). With nothing configured, `data` 
     "auth_config":       { "service": "login.ms", "method": "GET",  "path": "/auth/config" },
     "auth_apple_login":  { "service": "login.ms", "method": "POST", "path": "/auth/apple/login" },
     "auth_google_login": { "service": "login.ms", "method": "POST", "path": "/auth/google/login" },
-    "auth_password_login": { "service": "login.ms", "method": "POST", "path": "/auth/password/login" }
+    "auth_password_login": { "service": "login.ms", "method": "POST", "path": "/auth/password/login" },
+    "auth_logout":       { "service": "login.ms", "method": "POST", "path": "/auth/logout" }
 }
 ```
