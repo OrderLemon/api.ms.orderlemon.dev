@@ -28,6 +28,8 @@ final class SignInController
         'validation_failed' => 422,
         'invalid_token' => 401,
         'apple_invalid_code' => 401,
+        'invalid_credentials' => 401,
+        'password_login_unavailable' => 503,
         'account_disabled' => 403,
         'no_account' => 404,
         'email_ambiguous' => 409,
@@ -69,6 +71,26 @@ final class SignInController
         return Response::ok($this->call('auth_google_login', [
             'id_token' => $this->requireString($body, 'id_token', 8192),
             'nonce' => $this->requireString($body, 'nonce', 4096),
+        ]));
+    }
+
+    /** POST /v2/auth/password  {email, password} */
+    public function password(Request $request): Response
+    {
+        $body = $request->body;
+
+        // Not trimmed: spaces can be part of a password. Never logged.
+        $password = $body['password'] ?? null;
+        if (!is_string($password) || $password === '') {
+            throw new ValidationException(['password' => 'password is required']);
+        }
+        if (strlen($password) > 1024) {
+            throw new ValidationException(['password' => 'password is too long']);
+        }
+
+        return Response::ok($this->call('auth_password_login', [
+            'email' => $this->requireString($body, 'email', 320),
+            'password' => $password,
         ]));
     }
 

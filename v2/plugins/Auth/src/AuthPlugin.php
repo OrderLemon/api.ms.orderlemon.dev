@@ -37,5 +37,8 @@ final class AuthPlugin extends AbstractPlugin
 
         $router->post('/google', static fn(Request $request): Response
             => $container->get(SignInController::class)->google($request));
+
+        $router->post('/password', static fn(Request $request): Response
+            => $container->get(SignInController::class)->password($request));
     }
 }
