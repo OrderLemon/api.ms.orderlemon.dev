@@ -1,0 +1,9 @@
+{
+    "name": "Imports",
+    "slug": "imports",
+    "description": "Imports CSV/XLSX files of a shop's data through the dataport service.",
+    "version": "1.0.0",
+    "author": "Eduard <eduard@orderlemon.com>",
+    "enabled": true,
+    "dependencies": []
+}
