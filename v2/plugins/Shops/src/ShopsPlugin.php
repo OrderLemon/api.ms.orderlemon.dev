@@ -36,7 +36,7 @@ final class ShopsPlugin extends AbstractPlugin
                 => $container->get(ShopsController::class)->getShop($params['shop_id']),
         ));
 
-        $router->patch('/{shop_id}/general', ShopContext::wrap(
+        $router->patch('/{shop_id}', ShopContext::wrap(
             static fn(Request $request, array $params): Response
                 => $container->get(ShopsController::class)->updateGeneral($request, $params['shop_id']),
         ));

@@ -22,3 +22,4 @@ test-env/*.json
 postman-products-categories.md
 postman-campaigns.md
 nbproject/*
+.claude/settings.local.json
