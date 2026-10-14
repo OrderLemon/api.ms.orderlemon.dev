@@ -1,0 +1,9 @@
+{
+    "name": "Users",
+    "slug": "users",
+    "description": "Gateway to users.ms: the caller's profile (me), company user list, invite, update, remove, resend invite; plus the users.removed webhook that revokes removed users' device tokens.",
+    "version": "0.1.0",
+    "author": "OrderLemon",
+    "enabled": true,
+    "dependencies": []
+}
