@@ -5,16 +5,22 @@ The app's user-management endpoints. Every route is called with the device token
 
 | Method | Path | Body / query | Forwards to |
 |---|---|---|---|
-| GET | `/me` | | `users_get` (the caller) |
-| PATCH | `/me` | `{…profile fields}` | `users_update` (the caller; `phonenumber` is dropped) |
+| GET | `/me` | | `resolve_session` → `users_get` `{phonenumber: caller}` |
+| PATCH | `/me` | `{…profile fields}` | `resolve_session` → `users_update` (`phonenumber` is always the caller's) |
 | GET | `/list` | `?page=&per_page=&enabled=` | `users_list` (paginated, `meta` block) |
-| POST | `/get` | `{phonenumber?}` | `users_get` |
-| PATCH | `/` (i.e. `/v2/users`) | `{phonenumber?, …fields}` | `users_update` |
-| POST | `/invite` | `{phonenumber, full_name, email?, language?, role_id?}` | `users_invite` (201) |
+| POST | `/get` | `{phonenumber}` (required) | `users_get` |
+| PATCH | `/` (i.e. `/v2/users`) | `{phonenumber, …fields}` (required) | `users_update` |
+| POST | `/invite` | `{phonenumber, full_name, role_id, email?, language?}` | `users_invite` (201); the user gets all of their role's permissions |
 | POST | `/remove` | `{phonenumber}` | `users_remove` |
 | POST | `/resend-invite` | `{phonenumber}` | `users_resend_invite` |
+| GET | `/me/permissions` | | `resolve_session` → `users_permissions_get` `{phonenumber: caller}` |
+| POST | `/permissions/get` | `{phonenumber}` (required) | `users_permissions_get` → `{phonenumber, role_id, list, available}` (another user's: Owner only) |
+| PUT | `/permissions` | `{phonenumber, permissions: {feature: [capability, …]}}` | `users_permissions_update`: each listed feature ends up with exactly those capabilities (unavailable ones skipped); returns `added`, `removed`, `skipped` (Owner only) |
 
 Phonenumbers never go in URLs, so routes that name another user are POST/PATCH with a body.
+users.ms requires `phonenumber` on every route that targets a user (`422` without it, `404`
+when there is no such user). For `/me`, the gateway gets the caller's phonenumber from login.ms
+(`resolve_session`) and sends it.
 Which fields can be changed, and who may change another user, is decided by users.ms.
 
 ## Identity
@@ -49,12 +55,15 @@ that secret, every delivery is refused (`500 config_error`). Rate limit: 120 per
     { "name": "users.ms", "ip": "<users-ms-host>", "port": 443, "token": "<users.ms ms_server_token>", "ssl": true }
 ],
 "function_map": {
+    "resolve_session":     { "service": "login.ms", "method": "POST",  "path": "/auth/session/resolve" },
     "users_get":           { "service": "users.ms", "method": "POST",  "path": "/users/get" },
     "users_list":          { "service": "users.ms", "method": "POST",  "path": "/users/list" },
     "users_update":        { "service": "users.ms", "method": "PATCH", "path": "/users" },
     "users_invite":        { "service": "users.ms", "method": "POST",  "path": "/users/invite" },
     "users_remove":        { "service": "users.ms", "method": "POST",  "path": "/users/remove" },
-    "users_resend_invite": { "service": "users.ms", "method": "POST",  "path": "/users/resend-invite" }
+    "users_resend_invite": { "service": "users.ms", "method": "POST",  "path": "/users/resend-invite" },
+    "users_permissions_get":    { "service": "users.ms", "method": "POST", "path": "/users/permissions/get" },
+    "users_permissions_update": { "service": "users.ms", "method": "PUT",  "path": "/users/permissions" }
 },
 "users": {
     "webhook_secret": "<at least 32 random characters, e.g. openssl rand -hex 32>"

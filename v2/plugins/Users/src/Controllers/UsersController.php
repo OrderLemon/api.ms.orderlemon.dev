@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\Users\Controllers;
 
+use Plugins\Users\Services\LoginService;
 use Plugins\Users\Services\UsersService;
 use Pmsrapi\V2\Exception\UnauthorizedException;
 use Pmsrapi\V2\Http\Request;
@@ -16,18 +17,19 @@ final class UsersController
 
     public function __construct(
         private readonly UsersService $users,
+        private readonly LoginService $login,
         private readonly TokenStore $tokens,
     ) {}
 
     public function me(Request $request): Response
     {
-        return $this->forward('users_get', $request, []);
+        return $this->forward('users_get', $request, ['phonenumber' => $this->callerPhonenumber($request)]);
     }
 
     public function updateMe(Request $request): Response
     {
         $body = $request->body;
-        unset($body['phonenumber']); // always the caller
+        $body['phonenumber'] = $this->callerPhonenumber($request); // always the caller
 
         return $this->forward('users_update', $request, $body);
     }
@@ -69,6 +71,32 @@ final class UsersController
         return $this->forward('users_resend_invite', $request, $request->body);
     }
 
+    public function myPermissions(Request $request): Response
+    {
+        return $this->forward('users_permissions_get', $request, ['phonenumber' => $this->callerPhonenumber($request)]);
+    }
+
+    public function permissions(Request $request): Response
+    {
+        return $this->forward('users_permissions_get', $request, $request->body);
+    }
+
+    public function updatePermissions(Request $request): Response
+    {
+        $payload = array_diff_key($request->body, array_flip(self::IDENTITY_KEYS)) + $this->identity($request);
+        $data = $this->users->call('users_permissions_update', $payload)['data'];
+
+        // These are {feature: …} maps. Decoding users.ms's JSON turned an empty
+        // one into [], so make them objects again for the app.
+        foreach (['added', 'removed', 'skipped'] as $key) {
+            if (is_array($data) && isset($data[$key]) && is_array($data[$key])) {
+                $data[$key] = (object) $data[$key];
+            }
+        }
+
+        return Response::ok($data);
+    }
+
     private function forward(string $function, Request $request, array $body, bool $created = false): Response
     {
         $payload = array_diff_key($body, array_flip(self::IDENTITY_KEYS)) + $this->identity($request);
@@ -76,6 +104,13 @@ final class UsersController
         $result = $this->users->call($function, $payload);
 
         return $created ? Response::created($result['data']) : Response::ok($result['data'], $result['meta']);
+    }
+
+    private function callerPhonenumber(Request $request): string
+    {
+        $identity = $this->identity($request);
+
+        return $this->login->phonenumberFor($identity['device_uuid'], $identity['company_id']);
     }
 
     private function identity(Request $request): array
