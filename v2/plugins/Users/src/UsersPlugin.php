@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Plugins\Users;
 
 use Plugins\Users\Controllers\UsersController;
+use Plugins\Users\Services\LoginService;
 use Plugins\Users\Services\UsersService;
 use Plugins\Users\Webhooks\UsersWebhookHandler;
 use Pmsrapi\V2\Cache\RateLimiter;
@@ -33,9 +34,17 @@ final class UsersPlugin extends AbstractPlugin
         );
 
         $registrar->singleton(
+            LoginService::class,
+            static fn(Container $container): LoginService => new LoginService(
+                $container->get(ServiceClient::class),
+            ),
+        );
+
+        $registrar->singleton(
             UsersController::class,
             static fn(Container $container): UsersController => new UsersController(
                 $container->get(UsersService::class),
+                $container->get(LoginService::class),
                 $container->get(TokenStore::class),
             ),
         );
@@ -58,6 +67,7 @@ final class UsersPlugin extends AbstractPlugin
 
         $router->get('/me', static fn(Request $r, array $p): Response => $users()->me($r));
         $router->patch('/me', static fn(Request $r, array $p): Response => $users()->updateMe($r));
+        $router->get('/me/permissions', static fn(Request $r, array $p): Response => $users()->myPermissions($r));
         $router->get('/list', static fn(Request $r, array $p): Response => $users()->list($r));
 
         // The target user is `phonenumber` in the body, never in the URL.
@@ -66,5 +76,7 @@ final class UsersPlugin extends AbstractPlugin
         $router->post('/invite', static fn(Request $r, array $p): Response => $users()->invite($r));
         $router->post('/remove', static fn(Request $r, array $p): Response => $users()->remove($r));
         $router->post('/resend-invite', static fn(Request $r, array $p): Response => $users()->resendInvite($r));
+        $router->post('/permissions/get', static fn(Request $r, array $p): Response => $users()->permissions($r));
+        $router->put('/permissions', static fn(Request $r, array $p): Response => $users()->updatePermissions($r));
     }
 }

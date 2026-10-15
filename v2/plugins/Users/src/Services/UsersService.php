@@ -23,6 +23,8 @@ use Pmsrapi\V2\Support\Logger;
  *   users_invite         POST  /users/invite
  *   users_remove         POST  /users/remove
  *   users_resend_invite  POST  /users/resend-invite
+ *   users_permissions_get     POST /users/permissions/get
+ *   users_permissions_update  PUT  /users/permissions
  */
 final class UsersService
 {
