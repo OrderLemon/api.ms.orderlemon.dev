@@ -66,13 +66,13 @@ final class UsersPlugin extends AbstractPlugin
         $users = static fn(): UsersController => $container->get(UsersController::class);
 
         $router->get('/me', static fn(Request $r, array $p): Response => $users()->me($r));
-        $router->patch('/me', static fn(Request $r, array $p): Response => $users()->updateMe($r));
+        $router->put('/me', static fn(Request $r, array $p): Response => $users()->updateMe($r));
         $router->get('/me/permissions', static fn(Request $r, array $p): Response => $users()->myPermissions($r));
         $router->get('/list', static fn(Request $r, array $p): Response => $users()->list($r));
 
         // The target user is `phonenumber` in the body, never in the URL.
         $router->post('/get', static fn(Request $r, array $p): Response => $users()->get($r));
-        $router->patch('/', static fn(Request $r, array $p): Response => $users()->update($r));
+        $router->put('/', static fn(Request $r, array $p): Response => $users()->update($r));
         $router->post('/invite', static fn(Request $r, array $p): Response => $users()->invite($r));
         $router->post('/remove', static fn(Request $r, array $p): Response => $users()->remove($r));
         $router->post('/resend-invite', static fn(Request $r, array $p): Response => $users()->resendInvite($r));

@@ -19,7 +19,7 @@ use Pmsrapi\V2\Support\Logger;
  * Functions (this service's function_map, service: users.ms):
  *   users_get            POST  /users/get
  *   users_list           POST  /users/list
- *   users_update         PATCH /users
+ *   users_update         PUT   /users
  *   users_invite         POST  /users/invite
  *   users_remove         POST  /users/remove
  *   users_resend_invite  POST  /users/resend-invite
