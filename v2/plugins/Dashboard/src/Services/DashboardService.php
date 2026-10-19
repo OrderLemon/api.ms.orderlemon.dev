@@ -12,11 +12,12 @@ final class DashboardService
         private readonly ServiceClient $serviceClient,
     ) {}
 
-    public function forShop(int $shopId, int $interval): array
+    public function forShop(int $shopId, string $from, string $to): array
     {
         return $this->serviceClient->call('analytics_dashboard', [
             'shop_id' => $shopId,
-            'interval' => $interval,
+            'from' => $from,
+            'to' => $to,
         ]);
     }
 }
