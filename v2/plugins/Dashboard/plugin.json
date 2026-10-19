@@ -1,0 +1,9 @@
+{
+    "name": "Dashboard",
+    "slug": "dashboard",
+    "description": "Shop dashboard analytics for a period, served by analytics.ms.",
+    "version": "1.0.0",
+    "author": "PMSRAPI",
+    "enabled": true,
+    "dependencies": []
+}
