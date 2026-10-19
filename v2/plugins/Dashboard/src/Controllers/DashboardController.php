@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\Dashboard\Controllers;
 
+use DateTimeImmutable;
 use Plugins\Dashboard\Services\DashboardService;
 use Pmsrapi\V2\Exception\ValidationException;
 use Pmsrapi\V2\Http\Request;
@@ -11,7 +12,7 @@ use Pmsrapi\V2\Http\Response;
 
 final class DashboardController
 {
-    private const array ALLOWED_INTERVALS = [1, 7, 30];
+    private const int MAX_RANGE_DAYS = 366;
 
     public function __construct(
         private readonly DashboardService $dashboard,
@@ -19,9 +20,21 @@ final class DashboardController
 
     public function show(Request $request, string $shopId): Response
     {
+        $from = $this->requireDate($request, 'from');
+        $to = $this->requireDate($request, 'to');
+
+        if ($from > $to) {
+            throw new ValidationException(['from' => 'from must be on or before to']);
+        }
+
+        if ($from->diff($to)->days + 1 > self::MAX_RANGE_DAYS) {
+            throw new ValidationException(['to' => 'The period can be at most ' . self::MAX_RANGE_DAYS . ' days']);
+        }
+
         return Response::ok($this->dashboard->forShop(
             $this->requireShopId($shopId),
-            $this->requireInterval($request->query('interval')),
+            $from->format('Y-m-d'),
+            $to->format('Y-m-d'),
         ));
     }
 
@@ -36,14 +49,15 @@ final class DashboardController
         return $shopId;
     }
 
-    private function requireInterval(?string $value): int
+    private function requireDate(Request $request, string $field): DateTimeImmutable
     {
-        $interval = filter_var($value, FILTER_VALIDATE_INT);
+        $value = $request->query($field);
+        $date = $value !== null ? DateTimeImmutable::createFromFormat('!Y-m-d', $value) : false;
 
-        if ($interval === false || !in_array($interval, self::ALLOWED_INTERVALS, true)) {
-            throw new ValidationException(['interval' => 'interval must be one of: 1, 7, 30']);
+        if ($date === false || $date->format('Y-m-d') !== $value) {
+            throw new ValidationException([$field => "{$field} must be a date as Y-m-d"]);
         }
 
-        return $interval;
+        return $date;
     }
 }
