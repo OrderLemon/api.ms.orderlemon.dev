@@ -7,14 +7,15 @@ The app's user-management endpoints. Every route is called with the device token
 |---|---|---|---|
 | GET | `/me` | | `resolve_session` → `users_get` `{phonenumber: caller}` |
 | PUT | `/me` | `{…profile fields}` | `resolve_session` → `users_update` (`phonenumber` is always the caller's) |
-| GET | `/list` | `?shop_id=&role_id=&page=&per_page=&enabled=` | `users_list`: the shop's users with their role there (paginated, `meta` block) |
-| POST | `/get` | `{phonenumber, shop_id?}` | `users_get` (`shop_id` for another user) |
-| PUT | `/` (i.e. `/v2/users`) | `{phonenumber, shop_id?, …fields}` | `users_update` (`shop_id` for another user) |
-| POST | `/invite` | `{shop_id, phonenumber, full_name, role_id, email?, language?}` | `users_invite` (201): a new user with that role in that shop |
-| POST | `/remove` | `{shop_id, phonenumber}` | `users_remove`: out of that shop; `account_disabled` when it was their last |
-| POST | `/resend-invite` | `{shop_id, phonenumber}` | `users_resend_invite` |
-Users are per shop: every call about another user names the shop with `shop_id`, and
-users.ms checks the caller's role there. Roles and permissions are in the **Roles** plugin
+| GET | `/{shop_id}/list` | `?role_id=&page=&per_page=&enabled=` | `users_list`: the shop's users with their role there (paginated, `meta` block) |
+| POST | `/{shop_id}/get` | `{phonenumber}` | `users_get` |
+| PUT | `/{shop_id}` | `{phonenumber, …fields}` | `users_update` |
+| POST | `/{shop_id}/invite` | `{phonenumber, full_name, role_id, email?, language?}` | `users_invite` (201): a new user with that role in that shop |
+| POST | `/{shop_id}/remove` | `{phonenumber}` | `users_remove`: out of that shop; `account_disabled` when it was their last |
+| POST | `/{shop_id}/resend-invite` | `{phonenumber}` | `users_resend_invite` |
+Users are per shop: like the other plugins, every call about another user has the shop as
+the first path segment (`/v2/users/{shop_id}/…`); the gateway sends it to users.ms as
+`shop_id`, and a `shop_id` in the body is ignored. users.ms checks the caller's role there. Roles and permissions are in the **Roles** plugin
 (`/v2/roles/…`), which reuses this plugin's users.ms client (`UsersService`) and
 `Support\DeviceIdentity`. Full contract: users.ms's Users plugin README.
 
