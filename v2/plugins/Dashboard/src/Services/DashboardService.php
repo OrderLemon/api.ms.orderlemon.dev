@@ -20,4 +20,14 @@ final class DashboardService
             'to' => $to,
         ]);
     }
+
+    public function forProduct(int $shopId, int $productId, string $from, string $to): array
+    {
+        return $this->serviceClient->call('analytics_product', [
+            'product_id' => $productId,
+            'shop_id' => $shopId,
+            'from' => $from,
+            'to' => $to,
+        ]);
+    }
 }

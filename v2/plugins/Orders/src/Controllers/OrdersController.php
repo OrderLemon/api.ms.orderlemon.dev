@@ -19,20 +19,25 @@ use Pmsrapi\V2\Support\Logger;
  */
 final class OrdersController
 {
+    /** Query parameters forwarded to orders.ms for the list; orders.ms validates them. */
+    private const array LIST_QUERY_KEYS = ['status_id', 'logistics_type', 'from', 'to', 'limit', 'offset'];
+
     public function __construct(
         private readonly ServiceClient $serviceClient,
         private readonly Logger $logger,
     ) {}
 
-    /** GET /orders/{shop_id}?status=new|preparing|ready|done — no status lists them all. orders.ms validates the keyword. */
+    /** GET /orders/{shop_id}?status_id=&logistics_type=&from=Y-m-d&to=Y-m-d&limit=&offset= */
     public function listOrders(Request $request, string $shopId): Response
     {
         $params = ['shop_id' => $this->requireShopId($shopId)];
 
-        $status = trim((string) $request->query('status', ''));
+        foreach (self::LIST_QUERY_KEYS as $key) {
+            $value = trim((string) $request->query($key, ''));
 
-        if ($status !== '') {
-            $params['status'] = $status;
+            if ($value !== '') {
+                $params[$key] = $value;
+            }
         }
 
         return $this->call('orders_list', $params);

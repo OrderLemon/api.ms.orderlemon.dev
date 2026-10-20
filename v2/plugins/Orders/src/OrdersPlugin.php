@@ -31,7 +31,7 @@ final class OrdersPlugin extends AbstractPlugin
     {
         // Identifiers in the path; phone numbers in the JSON body, never the URL.
 
-        // ?status=new|preparing|ready|done filters by status; omitted = all.
+        // ?status_id=&logistics_type=&from=Y-m-d&to=Y-m-d&limit=&offset=
         $router->get('/{shop_id}', static fn(Request $request, array $params): Response
             => $container->get(OrdersController::class)->listOrders($request, $params['shop_id']));
 
