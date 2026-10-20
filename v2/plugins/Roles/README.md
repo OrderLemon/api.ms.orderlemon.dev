@@ -16,9 +16,18 @@ toggles, and a user has one role per shop. Calls about roles or other users name
 | PUT | `/permissions` | `{shop_id, role_id, feature, enabled}` | `users_roles_permissions_update`: switch one toggle | Owner |
 | POST | `/get` | `{shop_id, phonenumber}` | `users_roles_get`: that user's role in the shop | Team / yourself |
 | PUT | `/assign` | `{shop_id, phonenumber, role_id}` | `users_roles_assign`: give a role in the shop; `role_id: null` removes access | Team (Owner role: Owner) |
+| POST | `/create` | `{shop_id, name, description?, permissions: [feature…]}` | `users_roles_create` (201): a custom role with exactly those permissions on | Owner |
+| PUT | `/rename` | `{shop_id, role_id, name, description?}` | `users_roles_rename`: rename a custom role | Owner |
+| POST | `/delete` | `{shop_id, role_id}` | `users_roles_delete`: delete a custom role nobody has | Owner |
+
+**System roles** (Owner, Billing, Staff; `system: true` in `/list`) can't be renamed or deleted
+(`409 system_role`). Billing's and Staff's toggles can still be switched. A custom role's
+`permissions` must be known features and not owner-only; its name is unique within the shop
+(`409 role_name_taken`); it can only be deleted once nobody has it (`409 role_in_use`).
 
 Errors keep users.ms's code and details: `validation_failed` 422, `forbidden` 403,
-`user_not_found` 404, `role_locked` 409, `shop_lookup_unavailable` 503. Unknown errors are
+`user_not_found` 404, `role_locked` / `role_name_taken` / `role_in_use` / `system_role` 409,
+`shop_lookup_unavailable` 503. Unknown errors are
 logged and become `502 service_error`.
 
 ## How it works
@@ -38,7 +47,10 @@ These functions must be in `api.ms`'s `function_map`:
 "users_roles_list":               { "service": "users.ms", "method": "POST", "path": "/users/roles/list" },
 "users_roles_permissions_update": { "service": "users.ms", "method": "PUT",  "path": "/users/roles/permissions" },
 "users_roles_get":                { "service": "users.ms", "method": "POST", "path": "/users/roles/get" },
-"users_roles_assign":             { "service": "users.ms", "method": "PUT",  "path": "/users/roles" }
+"users_roles_assign":             { "service": "users.ms", "method": "PUT",  "path": "/users/roles" },
+"users_roles_create":             { "service": "users.ms", "method": "POST", "path": "/users/roles/create" },
+"users_roles_rename":             { "service": "users.ms", "method": "PUT",  "path": "/users/roles/rename" },
+"users_roles_delete":             { "service": "users.ms", "method": "POST", "path": "/users/roles/delete" }
 ```
 
 Don't add a `roles` entry to `resources` in api.ms's config: it would collide with this

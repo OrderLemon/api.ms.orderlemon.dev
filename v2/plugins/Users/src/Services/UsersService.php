@@ -29,6 +29,9 @@ use Pmsrapi\V2\Support\Logger;
  *   users_roles_permissions_update  PUT   /users/roles/permissions
  *   users_roles_get                 POST  /users/roles/get
  *   users_roles_assign              PUT   /users/roles
+ *   users_roles_create              POST  /users/roles/create
+ *   users_roles_rename              PUT   /users/roles/rename
+ *   users_roles_delete              POST  /users/roles/delete
  */
 final class UsersService
 {
@@ -41,6 +44,9 @@ final class UsersService
         'user_exists' => 409,
         'invite_not_pending' => 409,
         'role_locked' => 409,
+        'role_name_taken' => 409,
+        'role_in_use' => 409,
+        'system_role' => 409,
         'shop_lookup_unavailable' => 503,
         'rate_limited' => 429,
     ];
