@@ -26,6 +26,9 @@ use Pmsrapi\V2\Plugin\PluginRouter;
  *   PUT    /v2/roles/permissions   {shop_id, role_id, feature, enabled}: switch one toggle
  *   POST   /v2/roles/get           {shop_id, phonenumber}: a user's role in the shop
  *   PUT    /v2/roles/assign        {shop_id, phonenumber, role_id}: give a role, or null
+ *   POST   /v2/roles/create        {shop_id, name, description?, permissions}: a custom role
+ *   PUT    /v2/roles/rename        {shop_id, role_id, name, description?}: rename a custom role
+ *   POST   /v2/roles/delete        {shop_id, role_id}: delete a custom role nobody has
  */
 final class RolesPlugin extends AbstractPlugin
 {
@@ -52,5 +55,10 @@ final class RolesPlugin extends AbstractPlugin
         $router->put('/permissions', static fn(Request $r, array $p): Response => $roles()->togglePermission($r));
         $router->post('/get', static fn(Request $r, array $p): Response => $roles()->userRole($r));
         $router->put('/assign', static fn(Request $r, array $p): Response => $roles()->assign($r));
+
+        // Custom roles; Owner, Billing and Staff are system roles and can't be renamed or deleted.
+        $router->post('/create', static fn(Request $r, array $p): Response => $roles()->create($r));
+        $router->put('/rename', static fn(Request $r, array $p): Response => $roles()->rename($r));
+        $router->post('/delete', static fn(Request $r, array $p): Response => $roles()->delete($r));
     }
 }

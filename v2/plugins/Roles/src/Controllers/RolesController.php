@@ -46,10 +46,25 @@ final class RolesController
         return $this->forward('users_roles_assign', $request, $request->body);
     }
 
-    private function forward(string $function, Request $request, array $body): Response
+    public function create(Request $request): Response
+    {
+        return $this->forward('users_roles_create', $request, $request->body, created: true);
+    }
+
+    public function rename(Request $request): Response
+    {
+        return $this->forward('users_roles_rename', $request, $request->body);
+    }
+
+    public function delete(Request $request): Response
+    {
+        return $this->forward('users_roles_delete', $request, $request->body);
+    }
+
+    private function forward(string $function, Request $request, array $body, bool $created = false): Response
     {
         $result = $this->users->call($function, $this->identity->payload($request, $body));
 
-        return Response::ok($result['data'], $result['meta']);
+        return $created ? Response::created($result['data']) : Response::ok($result['data'], $result['meta']);
     }
 }

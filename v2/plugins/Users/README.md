@@ -68,7 +68,10 @@ that secret, every delivery is refused (`500 config_error`). Rate limit: 120 per
     "users_roles_list":               { "service": "users.ms", "method": "POST", "path": "/users/roles/list" },
     "users_roles_permissions_update": { "service": "users.ms", "method": "PUT",  "path": "/users/roles/permissions" },
     "users_roles_get":                { "service": "users.ms", "method": "POST", "path": "/users/roles/get" },
-    "users_roles_assign":             { "service": "users.ms", "method": "PUT",  "path": "/users/roles" }
+    "users_roles_assign":             { "service": "users.ms", "method": "PUT",  "path": "/users/roles" },
+    "users_roles_create":             { "service": "users.ms", "method": "POST", "path": "/users/roles/create" },
+    "users_roles_rename":             { "service": "users.ms", "method": "PUT",  "path": "/users/roles/rename" },
+    "users_roles_delete":             { "service": "users.ms", "method": "POST", "path": "/users/roles/delete" }
 },
 "users": {
     "webhook_secret": "<at least 32 random characters, e.g. openssl rand -hex 32>"
