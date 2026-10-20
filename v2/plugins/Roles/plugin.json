@@ -1,0 +1,9 @@
+{
+    "name": "Roles",
+    "slug": "roles",
+    "description": "Gateway to users.ms roles and permissions: the registry, the caller's roles, and per-shop roles, toggles and role assignment.",
+    "version": "0.1.0",
+    "author": "OrderLemon",
+    "enabled": true,
+    "dependencies": ["Users"]
+}

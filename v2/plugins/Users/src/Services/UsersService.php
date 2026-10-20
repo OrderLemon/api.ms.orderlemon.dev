@@ -23,8 +23,12 @@ use Pmsrapi\V2\Support\Logger;
  *   users_invite         POST  /users/invite
  *   users_remove         POST  /users/remove
  *   users_resend_invite  POST  /users/resend-invite
- *   users_permissions_get     POST /users/permissions/get
- *   users_permissions_update  PUT  /users/permissions
+ *   users_registry                  POST  /users/registry
+ *   users_roles_me                  POST  /users/roles/me
+ *   users_roles_list                POST  /users/roles/list
+ *   users_roles_permissions_update  PUT   /users/roles/permissions
+ *   users_roles_get                 POST  /users/roles/get
+ *   users_roles_assign              PUT   /users/roles
  */
 final class UsersService
 {
@@ -36,6 +40,8 @@ final class UsersService
         'user_not_found' => 404,
         'user_exists' => 409,
         'invite_not_pending' => 409,
+        'role_locked' => 409,
+        'shop_lookup_unavailable' => 503,
         'rate_limited' => 429,
     ];
 
