@@ -37,5 +37,8 @@ final class DashboardPlugin extends AbstractPlugin
     {
         $router->get('/{shop_id}', static fn(Request $request, array $params): Response
             => $container->get(DashboardController::class)->show($request, $params['shop_id']));
+
+        $router->get('/{shop_id}/products/{product_id}', static fn(Request $request, array $params): Response
+            => $container->get(DashboardController::class)->showProduct($request, $params['shop_id'], $params['product_id']));
     }
 }

@@ -20,6 +20,29 @@ final class DashboardController
 
     public function show(Request $request, string $shopId): Response
     {
+        [$from, $to] = $this->requirePeriod($request);
+
+        return Response::ok($this->dashboard->forShop(
+            $this->requireId($shopId, 'shop_id'),
+            $from,
+            $to,
+        ));
+    }
+
+    public function showProduct(Request $request, string $shopId, string $productId): Response
+    {
+        [$from, $to] = $this->requirePeriod($request);
+
+        return Response::ok($this->dashboard->forProduct(
+            $this->requireId($shopId, 'shop_id'),
+            $this->requireId($productId, 'product_id'),
+            $from,
+            $to,
+        ));
+    }
+
+    private function requirePeriod(Request $request): array
+    {
         $from = $this->requireDate($request, 'from');
         $to = $this->requireDate($request, 'to');
 
@@ -31,22 +54,18 @@ final class DashboardController
             throw new ValidationException(['to' => 'The period can be at most ' . self::MAX_RANGE_DAYS . ' days']);
         }
 
-        return Response::ok($this->dashboard->forShop(
-            $this->requireShopId($shopId),
-            $from->format('Y-m-d'),
-            $to->format('Y-m-d'),
-        ));
+        return [$from->format('Y-m-d'), $to->format('Y-m-d')];
     }
 
-    private function requireShopId(string $value): int
+    private function requireId(string $value, string $field): int
     {
-        $shopId = filter_var($value, FILTER_VALIDATE_INT);
+        $id = filter_var($value, FILTER_VALIDATE_INT);
 
-        if ($shopId === false || $shopId <= 0) {
-            throw new ValidationException(['shop_id' => 'A valid shop_id is required']);
+        if ($id === false || $id <= 0) {
+            throw new ValidationException([$field => "A valid {$field} is required"]);
         }
 
-        return $shopId;
+        return $id;
     }
 
     private function requireDate(Request $request, string $field): DateTimeImmutable
