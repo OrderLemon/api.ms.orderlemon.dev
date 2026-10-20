@@ -7,15 +7,16 @@ The app's user-management endpoints. Every route is called with the device token
 |---|---|---|---|
 | GET | `/me` | | `resolve_session` → `users_get` `{phonenumber: caller}` |
 | PUT | `/me` | `{…profile fields}` | `resolve_session` → `users_update` (`phonenumber` is always the caller's) |
-| GET | `/list` | `?page=&per_page=&enabled=` | `users_list` (paginated, `meta` block) |
-| POST | `/get` | `{phonenumber}` (required) | `users_get` |
-| PUT | `/` (i.e. `/v2/users`) | `{phonenumber, …fields}` (required) | `users_update` |
-| POST | `/invite` | `{phonenumber, full_name, role_id, email?, language?}` | `users_invite` (201); the user gets all of their role's permissions |
-| POST | `/remove` | `{phonenumber}` | `users_remove` |
-| POST | `/resend-invite` | `{phonenumber}` | `users_resend_invite` |
-| GET | `/me/permissions` | | `resolve_session` → `users_permissions_get` `{phonenumber: caller}` |
-| POST | `/permissions/get` | `{phonenumber}` (required) | `users_permissions_get` → `{phonenumber, role_id, list, available}` (another user's: Owner only) |
-| PUT | `/permissions` | `{phonenumber, permissions: {feature: [capability, …]}}` | `users_permissions_update`: each listed feature ends up with exactly those capabilities (unavailable ones skipped); returns `added`, `removed`, `skipped` (Owner only) |
+| GET | `/list` | `?shop_id=&role_id=&page=&per_page=&enabled=` | `users_list`: the shop's users with their role there (paginated, `meta` block) |
+| POST | `/get` | `{phonenumber, shop_id?}` | `users_get` (`shop_id` for another user) |
+| PUT | `/` (i.e. `/v2/users`) | `{phonenumber, shop_id?, …fields}` | `users_update` (`shop_id` for another user) |
+| POST | `/invite` | `{shop_id, phonenumber, full_name, role_id, email?, language?}` | `users_invite` (201): a new user with that role in that shop |
+| POST | `/remove` | `{shop_id, phonenumber}` | `users_remove`: out of that shop; `account_disabled` when it was their last |
+| POST | `/resend-invite` | `{shop_id, phonenumber}` | `users_resend_invite` |
+Users are per shop: every call about another user names the shop with `shop_id`, and
+users.ms checks the caller's role there. Roles and permissions are in the **Roles** plugin
+(`/v2/roles/…`), which reuses this plugin's users.ms client (`UsersService`) and
+`Support\DeviceIdentity`. Full contract: users.ms's Users plugin README.
 
 Phonenumbers never go in URLs, so routes that name another user are POST/PUT with a body.
 users.ms requires `phonenumber` on every route that targets a user (`422` without it, `404`
@@ -31,8 +32,8 @@ these two keys itself (a client can't override them). users.ms resolves them thr
 The static `ms_server_token` is not a device session: these routes answer `401` with it.
 
 Errors from users.ms keep their code and details (`validation_failed`, `user_not_found`,
-`forbidden`, `user_exists`, `invite_not_pending`, …). Unknown errors are logged and become
-`502 service_error`.
+`forbidden`, `user_exists`, `invite_not_pending`, `role_locked`, `shop_lookup_unavailable`, …).
+Unknown errors are logged and become `502 service_error`.
 
 ## Removed users: the `users.removed` webhook
 
@@ -62,8 +63,12 @@ that secret, every delivery is refused (`500 config_error`). Rate limit: 120 per
     "users_invite":        { "service": "users.ms", "method": "POST",  "path": "/users/invite" },
     "users_remove":        { "service": "users.ms", "method": "POST",  "path": "/users/remove" },
     "users_resend_invite": { "service": "users.ms", "method": "POST",  "path": "/users/resend-invite" },
-    "users_permissions_get":    { "service": "users.ms", "method": "POST", "path": "/users/permissions/get" },
-    "users_permissions_update": { "service": "users.ms", "method": "PUT",  "path": "/users/permissions" }
+    "users_registry":                 { "service": "users.ms", "method": "POST", "path": "/users/registry" },
+    "users_roles_me":                 { "service": "users.ms", "method": "POST", "path": "/users/roles/me" },
+    "users_roles_list":               { "service": "users.ms", "method": "POST", "path": "/users/roles/list" },
+    "users_roles_permissions_update": { "service": "users.ms", "method": "PUT",  "path": "/users/roles/permissions" },
+    "users_roles_get":                { "service": "users.ms", "method": "POST", "path": "/users/roles/get" },
+    "users_roles_assign":             { "service": "users.ms", "method": "PUT",  "path": "/users/roles" }
 },
 "users": {
     "webhook_secret": "<at least 32 random characters, e.g. openssl rand -hex 32>"

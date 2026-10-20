@@ -7,6 +7,7 @@ namespace Plugins\Users;
 use Plugins\Users\Controllers\UsersController;
 use Plugins\Users\Services\LoginService;
 use Plugins\Users\Services\UsersService;
+use Plugins\Users\Support\DeviceIdentity;
 use Plugins\Users\Webhooks\UsersWebhookHandler;
 use Pmsrapi\V2\Cache\RateLimiter;
 use Pmsrapi\V2\Cache\RedisClient;
@@ -41,11 +42,18 @@ final class UsersPlugin extends AbstractPlugin
         );
 
         $registrar->singleton(
+            DeviceIdentity::class,
+            static fn(Container $container): DeviceIdentity => new DeviceIdentity(
+                $container->get(TokenStore::class),
+            ),
+        );
+
+        $registrar->singleton(
             UsersController::class,
             static fn(Container $container): UsersController => new UsersController(
                 $container->get(UsersService::class),
                 $container->get(LoginService::class),
-                $container->get(TokenStore::class),
+                $container->get(DeviceIdentity::class),
             ),
         );
 
@@ -67,7 +75,6 @@ final class UsersPlugin extends AbstractPlugin
 
         $router->get('/me', static fn(Request $r, array $p): Response => $users()->me($r));
         $router->put('/me', static fn(Request $r, array $p): Response => $users()->updateMe($r));
-        $router->get('/me/permissions', static fn(Request $r, array $p): Response => $users()->myPermissions($r));
         $router->get('/list', static fn(Request $r, array $p): Response => $users()->list($r));
 
         // The target user is `phonenumber` in the body, never in the URL.
@@ -76,7 +83,5 @@ final class UsersPlugin extends AbstractPlugin
         $router->post('/invite', static fn(Request $r, array $p): Response => $users()->invite($r));
         $router->post('/remove', static fn(Request $r, array $p): Response => $users()->remove($r));
         $router->post('/resend-invite', static fn(Request $r, array $p): Response => $users()->resendInvite($r));
-        $router->post('/permissions/get', static fn(Request $r, array $p): Response => $users()->permissions($r));
-        $router->put('/permissions', static fn(Request $r, array $p): Response => $users()->updatePermissions($r));
     }
 }
