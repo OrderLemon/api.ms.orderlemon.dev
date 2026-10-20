@@ -31,10 +31,10 @@ final class UsersController
         return $this->forward('users_update', $request, $body);
     }
 
-    public function list(Request $request): Response
+    public function list(Request $request, string $shopId): Response
     {
-        $payload = [];
-        foreach (['shop_id', 'role_id', 'page', 'per_page', 'enabled'] as $key) {
+        $payload = ['shop_id' => $shopId];
+        foreach (['role_id', 'page', 'per_page', 'enabled'] as $key) {
             if (isset($request->query[$key])) {
                 $payload[$key] = $request->query[$key];
             }
@@ -43,29 +43,30 @@ final class UsersController
         return $this->forward('users_list', $request, $payload);
     }
 
-    public function get(Request $request): Response
+    // The path's shop_id wins over a shop_id in the body: `+` keeps the left side.
+    public function get(Request $request, string $shopId): Response
     {
-        return $this->forward('users_get', $request, $request->body);
+        return $this->forward('users_get', $request, ['shop_id' => $shopId] + $request->body);
     }
 
-    public function update(Request $request): Response
+    public function update(Request $request, string $shopId): Response
     {
-        return $this->forward('users_update', $request, $request->body);
+        return $this->forward('users_update', $request, ['shop_id' => $shopId] + $request->body);
     }
 
-    public function invite(Request $request): Response
+    public function invite(Request $request, string $shopId): Response
     {
-        return $this->forward('users_invite', $request, $request->body, created: true);
+        return $this->forward('users_invite', $request, ['shop_id' => $shopId] + $request->body, created: true);
     }
 
-    public function remove(Request $request): Response
+    public function remove(Request $request, string $shopId): Response
     {
-        return $this->forward('users_remove', $request, $request->body);
+        return $this->forward('users_remove', $request, ['shop_id' => $shopId] + $request->body);
     }
 
-    public function resendInvite(Request $request): Response
+    public function resendInvite(Request $request, string $shopId): Response
     {
-        return $this->forward('users_resend_invite', $request, $request->body);
+        return $this->forward('users_resend_invite', $request, ['shop_id' => $shopId] + $request->body);
     }
 
     private function forward(string $function, Request $request, array $body, bool $created = false): Response

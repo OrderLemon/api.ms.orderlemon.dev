@@ -8,17 +8,21 @@ and the rules; this plugin only forwards.
 toggles, and a user has one role per shop. Calls about roles or other users name the shop with
 `shop_id`; "Team" and "Owner" below mean *in that shop*.
 
+Like the other plugins, the shop is the first path segment (and the role the second); the
+gateway sends them to users.ms as `shop_id` / `role_id`, and the same keys in a body are
+ignored. Phonenumbers stay in the body.
+
 | Method | Path | Body | Forwards to | Who |
 |---|---|---|---|---|
 | GET | `/registry` | | `users_registry`: every permission by category, with `owner_only` | anyone |
 | GET | `/me` | | `users_roles_me`: the caller's shops, role and permissions in each | anyone |
-| POST | `/list` | `{shop_id}` | `users_roles_list`: the shop's roles with their toggles | Team |
-| PUT | `/permissions` | `{shop_id, role_id, feature, enabled}` | `users_roles_permissions_update`: switch one toggle | Owner |
-| POST | `/get` | `{shop_id, phonenumber}` | `users_roles_get`: that user's role in the shop | Team / yourself |
-| PUT | `/assign` | `{shop_id, phonenumber, role_id}` | `users_roles_assign`: give a role in the shop; `role_id: null` removes access | Team (Owner role: Owner) |
-| POST | `/create` | `{shop_id, name, description?, permissions: [feature…]}` | `users_roles_create` (201): a custom role with exactly those permissions on | Owner |
-| PUT | `/rename` | `{shop_id, role_id, name, description?}` | `users_roles_rename`: rename a custom role | Owner |
-| POST | `/delete` | `{shop_id, role_id}` | `users_roles_delete`: delete a custom role nobody has | Owner |
+| GET | `/{shop_id}` | | `users_roles_list`: the shop's roles with their toggles | Team |
+| POST | `/{shop_id}` | `{name, description?, permissions: [feature…]}` | `users_roles_create` (201): a custom role with exactly those permissions on | Owner |
+| PUT | `/{shop_id}/{role_id}` | `{name, description?}` | `users_roles_rename`: rename a custom role | Owner |
+| DELETE | `/{shop_id}/{role_id}` | | `users_roles_delete`: delete a custom role nobody has | Owner |
+| PUT | `/{shop_id}/{role_id}/permissions` | `{feature, enabled}` | `users_roles_permissions_update`: switch one toggle | Owner |
+| POST | `/{shop_id}/get` | `{phonenumber}` | `users_roles_get`: that user's role in the shop | Team / yourself |
+| PUT | `/{shop_id}/assign` | `{phonenumber, role_id}` | `users_roles_assign`: give a role in the shop; `role_id: null` removes access | Team (Owner role: Owner) |
 
 **System roles** (Owner, Billing, Staff; `system: true` in `/list`) can't be renamed or deleted
 (`409 system_role`). Billing's and Staff's toggles can still be switched. A custom role's

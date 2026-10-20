@@ -20,6 +20,7 @@ use Pmsrapi\V2\Plugin\AbstractPlugin;
 use Pmsrapi\V2\Plugin\PluginRegistrar;
 use Pmsrapi\V2\Plugin\PluginRouter;
 use Pmsrapi\V2\Security\TokenStore;
+use Pmsrapi\V2\Support\ShopContext;
 use Pmsrapi\V2\Support\Logger;
 
 final class UsersPlugin extends AbstractPlugin
@@ -73,15 +74,29 @@ final class UsersPlugin extends AbstractPlugin
     {
         $users = static fn(): UsersController => $container->get(UsersController::class);
 
+        // Fixed paths first: the router takes the first match, so /me must not reach /{shop_id}.
         $router->get('/me', static fn(Request $r, array $p): Response => $users()->me($r));
         $router->put('/me', static fn(Request $r, array $p): Response => $users()->updateMe($r));
-        $router->get('/list', static fn(Request $r, array $p): Response => $users()->list($r));
 
-        // The target user is `phonenumber` in the body, never in the URL.
-        $router->post('/get', static fn(Request $r, array $p): Response => $users()->get($r));
-        $router->put('/', static fn(Request $r, array $p): Response => $users()->update($r));
-        $router->post('/invite', static fn(Request $r, array $p): Response => $users()->invite($r));
-        $router->post('/remove', static fn(Request $r, array $p): Response => $users()->remove($r));
-        $router->post('/resend-invite', static fn(Request $r, array $p): Response => $users()->resendInvite($r));
+        // Another user: the shop is the first path segment (like the other plugins), the target
+        // user is `phonenumber` in the body, never in the URL.
+        $router->get('/{shop_id}/list', ShopContext::wrap(
+            static fn(Request $r, array $p): Response => $users()->list($r, $p['shop_id']),
+        ));
+        $router->post('/{shop_id}/get', ShopContext::wrap(
+            static fn(Request $r, array $p): Response => $users()->get($r, $p['shop_id']),
+        ));
+        $router->put('/{shop_id}', ShopContext::wrap(
+            static fn(Request $r, array $p): Response => $users()->update($r, $p['shop_id']),
+        ));
+        $router->post('/{shop_id}/invite', ShopContext::wrap(
+            static fn(Request $r, array $p): Response => $users()->invite($r, $p['shop_id']),
+        ));
+        $router->post('/{shop_id}/remove', ShopContext::wrap(
+            static fn(Request $r, array $p): Response => $users()->remove($r, $p['shop_id']),
+        ));
+        $router->post('/{shop_id}/resend-invite', ShopContext::wrap(
+            static fn(Request $r, array $p): Response => $users()->resendInvite($r, $p['shop_id']),
+        ));
     }
 }

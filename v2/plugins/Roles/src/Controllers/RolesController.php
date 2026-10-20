@@ -26,41 +26,46 @@ final class RolesController
         return $this->forward('users_roles_me', $request, []);
     }
 
-    public function list(Request $request): Response
+    public function list(Request $request, string $shopId): Response
     {
-        return $this->forward('users_roles_list', $request, $request->body);
+        return $this->forward('users_roles_list', $request, ['shop_id' => $shopId]);
     }
 
-    public function togglePermission(Request $request): Response
+    public function create(Request $request, string $shopId): Response
     {
-        return $this->forward('users_roles_permissions_update', $request, $request->body);
+        return $this->forward('users_roles_create', $request, ['shop_id' => $shopId] + $request->body, created: true);
     }
 
-    public function userRole(Request $request): Response
+    public function rename(Request $request, string $shopId, string $roleId): Response
     {
-        return $this->forward('users_roles_get', $request, $request->body);
+        return $this->forward('users_roles_rename', $request, ['shop_id' => $shopId, 'role_id' => $roleId] + $request->body);
     }
 
-    public function assign(Request $request): Response
+    public function delete(Request $request, string $shopId, string $roleId): Response
     {
-        return $this->forward('users_roles_assign', $request, $request->body);
+        return $this->forward('users_roles_delete', $request, ['shop_id' => $shopId, 'role_id' => $roleId]);
     }
 
-    public function create(Request $request): Response
+    public function togglePermission(Request $request, string $shopId, string $roleId): Response
     {
-        return $this->forward('users_roles_create', $request, $request->body, created: true);
+        return $this->forward(
+            'users_roles_permissions_update',
+            $request,
+            ['shop_id' => $shopId, 'role_id' => $roleId] + $request->body,
+        );
     }
 
-    public function rename(Request $request): Response
+    public function userRole(Request $request, string $shopId): Response
     {
-        return $this->forward('users_roles_rename', $request, $request->body);
+        return $this->forward('users_roles_get', $request, ['shop_id' => $shopId] + $request->body);
     }
 
-    public function delete(Request $request): Response
+    public function assign(Request $request, string $shopId): Response
     {
-        return $this->forward('users_roles_delete', $request, $request->body);
+        return $this->forward('users_roles_assign', $request, ['shop_id' => $shopId] + $request->body);
     }
 
+    // The path's shop_id (and role_id) win over the same keys in a body: `+` keeps the left side.
     private function forward(string $function, Request $request, array $body, bool $created = false): Response
     {
         $result = $this->users->call($function, $this->identity->payload($request, $body));

@@ -13,22 +13,24 @@ use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Plugin\AbstractPlugin;
 use Pmsrapi\V2\Plugin\PluginRegistrar;
 use Pmsrapi\V2\Plugin\PluginRouter;
+use Pmsrapi\V2\Support\ShopContext;
 
 /**
  * Roles plugin: forwards to users.ms, which owns roles and permissions. Uses the Users
  * plugin's users.ms client and device identity (dependency in plugin.json).
  *
- * Routes (auto-prefixed with the slug "roles"):
+ * Routes (auto-prefixed with the slug "roles"). Like the other plugins, the shop is the
+ * first path segment; phonenumbers stay in the body.
  *
- *   GET    /v2/roles/registry      every permission, by category
- *   GET    /v2/roles/me            the caller's shops, role and permissions in each
- *   POST   /v2/roles/list          {shop_id}: the shop's roles with their toggles
- *   PUT    /v2/roles/permissions   {shop_id, role_id, feature, enabled}: switch one toggle
- *   POST   /v2/roles/get           {shop_id, phonenumber}: a user's role in the shop
- *   PUT    /v2/roles/assign        {shop_id, phonenumber, role_id}: give a role, or null
- *   POST   /v2/roles/create        {shop_id, name, description?, permissions}: a custom role
- *   PUT    /v2/roles/rename        {shop_id, role_id, name, description?}: rename a custom role
- *   POST   /v2/roles/delete        {shop_id, role_id}: delete a custom role nobody has
+ *   GET    /v2/roles/registry                        every permission, by category
+ *   GET    /v2/roles/me                              the caller's shops, role and permissions in each
+ *   GET    /v2/roles/{shop_id}                       the shop's roles with their toggles
+ *   POST   /v2/roles/{shop_id}                       {name, description?, permissions}: a custom role
+ *   PUT    /v2/roles/{shop_id}/{role_id}             {name, description?}: rename a custom role
+ *   DELETE /v2/roles/{shop_id}/{role_id}             delete a custom role nobody has
+ *   PUT    /v2/roles/{shop_id}/{role_id}/permissions {feature, enabled}: switch one toggle
+ *   POST   /v2/roles/{shop_id}/get                   {phonenumber}: a user's role in the shop
+ *   PUT    /v2/roles/{shop_id}/assign                {phonenumber, role_id}: give a role, or null
  */
 final class RolesPlugin extends AbstractPlugin
 {
@@ -47,18 +49,30 @@ final class RolesPlugin extends AbstractPlugin
     {
         $roles = static fn(): RolesController => $container->get(RolesController::class);
 
+        // Fixed paths first: the router takes the first match, so /me must not reach /{shop_id}.
         $router->get('/registry', static fn(Request $r, array $p): Response => $roles()->registry($r));
         $router->get('/me', static fn(Request $r, array $p): Response => $roles()->me($r));
 
-        // Everything else is per shop: the body names it with `shop_id`.
-        $router->post('/list', static fn(Request $r, array $p): Response => $roles()->list($r));
-        $router->put('/permissions', static fn(Request $r, array $p): Response => $roles()->togglePermission($r));
-        $router->post('/get', static fn(Request $r, array $p): Response => $roles()->userRole($r));
-        $router->put('/assign', static fn(Request $r, array $p): Response => $roles()->assign($r));
-
-        // Custom roles; Owner, Billing and Staff are system roles and can't be renamed or deleted.
-        $router->post('/create', static fn(Request $r, array $p): Response => $roles()->create($r));
-        $router->put('/rename', static fn(Request $r, array $p): Response => $roles()->rename($r));
-        $router->post('/delete', static fn(Request $r, array $p): Response => $roles()->delete($r));
+        $router->get('/{shop_id}', ShopContext::wrap(
+            static fn(Request $r, array $p): Response => $roles()->list($r, $p['shop_id']),
+        ));
+        $router->post('/{shop_id}', ShopContext::wrap(
+            static fn(Request $r, array $p): Response => $roles()->create($r, $p['shop_id']),
+        ));
+        $router->post('/{shop_id}/get', ShopContext::wrap(
+            static fn(Request $r, array $p): Response => $roles()->userRole($r, $p['shop_id']),
+        ));
+        $router->put('/{shop_id}/assign', ShopContext::wrap(
+            static fn(Request $r, array $p): Response => $roles()->assign($r, $p['shop_id']),
+        ));
+        $router->put('/{shop_id}/{role_id}/permissions', ShopContext::wrap(
+            static fn(Request $r, array $p): Response => $roles()->togglePermission($r, $p['shop_id'], $p['role_id']),
+        ));
+        $router->put('/{shop_id}/{role_id}', ShopContext::wrap(
+            static fn(Request $r, array $p): Response => $roles()->rename($r, $p['shop_id'], $p['role_id']),
+        ));
+        $router->delete('/{shop_id}/{role_id}', ShopContext::wrap(
+            static fn(Request $r, array $p): Response => $roles()->delete($r, $p['shop_id'], $p['role_id']),
+        ));
     }
 }
