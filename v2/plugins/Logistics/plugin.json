@@ -1,0 +1,9 @@
+{
+    "name": "Logistics",
+    "slug": "logistics",
+    "description": "Pickup & delivery settings of a shop through the shop service.",
+    "version": "1.0.0",
+    "author": "PMSRAPI",
+    "enabled": true,
+    "dependencies": []
+}
