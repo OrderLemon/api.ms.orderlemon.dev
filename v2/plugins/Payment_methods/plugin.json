@@ -1,0 +1,9 @@
+{
+    "name": "Payment_methods",
+    "slug": "payment_methods",
+    "description": "Per-shop payment method settings and the checkout list through the payway service.",
+    "version": "1.0.0",
+    "author": "PMSRAPI",
+    "enabled": true,
+    "dependencies": []
+}
