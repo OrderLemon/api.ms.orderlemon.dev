@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\Products\Controllers;
 
+use DateTimeImmutable;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Exception\ApiException;
 use Pmsrapi\V2\Exception\ConflictException;
@@ -40,6 +41,7 @@ final class ProductsController
         'metadata' => 'Extra details',
         'reset_hours' => 'Reset hours',
         'reset_days' => 'Reset days',
+        'sold_out_until' => 'Sold out until',
     ];
 
     public function __construct(
@@ -176,6 +178,15 @@ final class ProductsController
         $friendly = $this->validationService->friendlyErrors();
         $this->validationService->reset();
 
+        // Same rule as products.ms; checked here so the client gets a field
+        // error instead of the generic message an upstream 422 turns into.
+        if (!$this->isValidSoldOutUntil($body)) {
+            $hasErrors = true;
+            $technical['sold_out_until'] = 'sold_out_until must be null or a DATE_ATOM date-time with offset';
+            $friendly['sold_out_until'] = $this->label('sold_out_until')
+                . ' must be a date and time with a timezone offset, e.g. 2026-10-21T23:59:59+02:00.';
+        }
+
         if ($hasErrors) {
             $this->fail(
                 new ValidationException($friendly, 'Some of the information provided is invalid.'),
@@ -183,6 +194,25 @@ final class ProductsController
                 ['errors' => $technical, 'body' => array_diff_key($body, ['images' => true])],
             );
         }
+    }
+
+    /**
+     * sold_out_until is absent, null, or a date-time with offset such as
+     * "2026-10-21T23:59:59+02:00" ("Z" also accepted). Overflowing dates
+     * like Feb 31 are rejected, not rolled over.
+     *
+     * @param array<string, mixed> $body
+     */
+    private function isValidSoldOutUntil(array $body): bool
+    {
+        $value = $body['sold_out_until'] ?? null;
+        if ($value === null) {
+            return true;
+        }
+
+        return is_string($value)
+            && DateTimeImmutable::createFromFormat(DATE_ATOM, $value) !== false
+            && DateTimeImmutable::getLastErrors() === false;
     }
 
     private function label(string $field): string

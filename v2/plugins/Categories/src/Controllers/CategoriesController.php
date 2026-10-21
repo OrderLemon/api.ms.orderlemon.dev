@@ -36,6 +36,7 @@ use Pmsrapi\V2\Support\Logger;
 final class CategoriesController
 {
     private const int NAME_MAX_LENGTH = 24;
+    private const int FONT_AWESOME_MAX_LENGTH = 100;
 
     /** Human-readable label per field, for client-facing error text. */
     private const array FIELD_LABELS = [
@@ -43,6 +44,7 @@ final class CategoriesController
         'enabled' => 'Enabled status',
         'is_modifier' => 'Modifier flag',
         'metadata' => 'Extra details',
+        'font_awesome' => 'Icon',
     ];
 
     public function __construct(
@@ -154,6 +156,7 @@ final class CategoriesController
         }
 
         $this->validationService->maxLength($body, 'name', self::NAME_MAX_LENGTH, $this->label('name'));
+        $this->validationService->maxLength($body, 'font_awesome', self::FONT_AWESOME_MAX_LENGTH, $this->label('font_awesome'));
         $this->validationService->boolean($body, 'enabled', $this->label('enabled'));
         $this->validationService->boolean($body, 'is_modifier', $this->label('is_modifier'));
         $this->validationService->json($body, 'metadata', $this->label('metadata'));
