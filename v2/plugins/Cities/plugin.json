@@ -1,0 +1,9 @@
+{
+    "name": "Cities",
+    "slug": "cities",
+    "description": "The global cities list (country + postcode + town) through the shop service.",
+    "version": "1.0.0",
+    "author": "PMSRAPI",
+    "enabled": true,
+    "dependencies": []
+}
