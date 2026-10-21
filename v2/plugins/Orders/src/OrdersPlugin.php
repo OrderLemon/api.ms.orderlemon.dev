@@ -45,7 +45,7 @@ final class OrdersPlugin extends AbstractPlugin
         $router->get('/{shop_id}/{id}', static fn(Request $request, array $params): Response
             => $container->get(OrdersController::class)->getOrder($params['shop_id'], $params['id']));
 
-        $router->patch('/{shop_id}/{id}', static fn(Request $request, array $params): Response
+        $router->put('/{shop_id}/{id}', static fn(Request $request, array $params): Response
             => $container->get(OrdersController::class)->updateOrder($request, $params['shop_id'], $params['id']));
     }
 }

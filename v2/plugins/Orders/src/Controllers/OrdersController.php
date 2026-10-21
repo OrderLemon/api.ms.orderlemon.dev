@@ -52,7 +52,7 @@ final class OrdersController
         ]);
     }
 
-    /** PATCH /orders/{shop_id}/{id}  body: the fields to change, e.g. {"status_id": 4} */
+    /** PUT /orders/{shop_id}/{id}  body: the fields to change, e.g. {"status_id": 4} */
     public function updateOrder(Request $request, string $shopId, string $id): Response
     {
         $params = [

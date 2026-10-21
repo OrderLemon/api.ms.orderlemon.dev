@@ -117,4 +117,47 @@ final class ShopsController
 
         return Response::ok(["updated" => (bool) ($response['updated'] ?? false)]);
     }
+
+    public function getQr(string $shopId): Response
+    {
+        try {
+            $response = $this->serviceClient->call(
+                'shop_qr_get',
+                ['id' => $shopId],
+            );
+        } catch (ServiceException $ex) {
+            return Response::error($ex->statusCode(), ["error" => $ex->getMessage()]);
+        }
+
+        return Response::ok(["qr" => $response]);
+    }
+
+    public function createQr(string $shopId): Response
+    {
+        try {
+            $response = $this->serviceClient->call(
+                'shop_qr_create',
+                ['id' => $shopId],
+            );
+        } catch (ServiceException $ex) {
+            return Response::error($ex->statusCode(), ["error" => $ex->getMessage()]);
+        }
+
+        return Response::ok(["qr" => $response]);
+    }
+
+    public function updateQr(Request $request, string $shopId): Response
+    {
+        try {
+            $response = $this->serviceClient->call(
+                'shop_qr_update',
+                ['id' => $shopId],
+                $request->body,
+            );
+        } catch (ServiceException $ex) {
+            return Response::error($ex->statusCode(), ["error" => $ex->getMessage()]);
+        }
+
+        return Response::ok(["qr" => $response]);
+    }
 }
