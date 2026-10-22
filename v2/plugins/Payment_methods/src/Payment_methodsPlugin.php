@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Plugins\Payment_methods;
 
 use Plugins\Payment_methods\Controllers\PaymentMethodsController;
+use Plugins\Payment_methods\Services\PaymentMethodsService;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Core\Container;
 use Pmsrapi\V2\Http\Request;
@@ -12,6 +13,7 @@ use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Plugin\AbstractPlugin;
 use Pmsrapi\V2\Plugin\PluginRegistrar;
 use Pmsrapi\V2\Plugin\PluginRouter;
+use Pmsrapi\V2\Support\Logger;
 use Pmsrapi\V2\Support\ShopContext;
 
 /**
@@ -32,9 +34,17 @@ final class Payment_methodsPlugin extends AbstractPlugin
     public function register(PluginRegistrar $registrar): void
     {
         $registrar->singleton(
+            PaymentMethodsService::class,
+            static fn(Container $container): PaymentMethodsService => new PaymentMethodsService(
+                $container->get(ServiceClient::class),
+                $container->get(Logger::class),
+            ),
+        );
+
+        $registrar->singleton(
             PaymentMethodsController::class,
             static fn(Container $container): PaymentMethodsController => new PaymentMethodsController(
-                $container->get(ServiceClient::class),
+                $container->get(PaymentMethodsService::class),
             ),
         );
     }
