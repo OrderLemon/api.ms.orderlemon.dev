@@ -80,5 +80,53 @@ final class CampaignsPlugin extends AbstractPlugin
                     => $container->get(CampaignsController::class)->deleteCampaign($params['shop_id'], $params['id']),
             ),
         );
+
+        $router->get(
+            '/{shop_id}/{id}/results',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(CampaignsController::class)->getResults($params['shop_id'], $params['id']),
+            ),
+        );
+
+        $router->put(
+            '/{shop_id}/{id}/items/{item_id}/stock',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(CampaignsController::class)->updateItemStock($request, $params['shop_id'], $params['id'], $params['item_id']),
+            ),
+        );
+
+        $router->put(
+            '/{shop_id}/{id}/slots/{slot_id}/capacity',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(CampaignsController::class)->updateSlotCapacity($request, $params['shop_id'], $params['id'], $params['slot_id']),
+            ),
+        );
+
+        $router->post(
+            '/{shop_id}/{id}/schedule',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(CampaignsController::class)->scheduleCampaign($params['shop_id'], $params['id']),
+            ),
+        );
+
+        $router->post(
+            '/{shop_id}/{id}/cancel',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(CampaignsController::class)->cancelCampaign($params['shop_id'], $params['id']),
+            ),
+        );
+
+        $router->post(
+            '/{shop_id}/{id}/duplicate',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(CampaignsController::class)->duplicateCampaign($params['shop_id'], $params['id']),
+            ),
+        );
     }
 }

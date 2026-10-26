@@ -86,6 +86,45 @@ final class CampaignsController
         return $this->call('campaigns_delete', ['shop_id' => $shopId, 'id' => $id]);
     }
 
+    public function getResults(string $shopId, string $id): Response
+    {
+        return $this->call('campaigns_results', $this->campaignParams($shopId, $id));
+    }
+
+    public function updateItemStock(Request $request, string $shopId, string $id, string $itemId): Response
+    {
+        $params = [...$this->campaignParams($shopId, $id), 'item_id' => $this->requirePositiveInt($itemId, 'item_id')];
+
+        return $this->call('campaigns_item_stock', $params, $request->body);
+    }
+
+    public function updateSlotCapacity(Request $request, string $shopId, string $id, string $slotId): Response
+    {
+        $params = [...$this->campaignParams($shopId, $id), 'slot_id' => $this->requirePositiveInt($slotId, 'slot_id')];
+
+        return $this->call('campaigns_slot_capacity', $params, $request->body);
+    }
+
+    public function scheduleCampaign(string $shopId, string $id): Response
+    {
+        return $this->call('campaigns_schedule', $this->campaignParams($shopId, $id));
+    }
+
+    public function cancelCampaign(string $shopId, string $id): Response
+    {
+        return $this->call('campaigns_cancel', $this->campaignParams($shopId, $id));
+    }
+
+    public function duplicateCampaign(string $shopId, string $id): Response
+    {
+        return $this->call('campaigns_duplicate', $this->campaignParams($shopId, $id));
+    }
+
+    private function campaignParams(string $shopId, string $id): array
+    {
+        return ['shop_id' => $this->requireShopId($shopId), 'id' => $this->requirePositiveInt($id, 'id')];
+    }
+
     private function call(string $function, array $params, array $payload = []): Response
     {
         $envelope = null;
