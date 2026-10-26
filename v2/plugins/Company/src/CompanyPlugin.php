@@ -30,14 +30,14 @@ final class CompanyPlugin extends AbstractPlugin
 
     public function routes(PluginRouter $router, Container $container): void
     {
-        $router->get('/{company_id}/legal', ShopContext::wrap(
+        $router->get('/{company_id}/legal', 
             static fn(Request $request, array $params): Response
                 => $container->get(CompanyController::class)->getLegal($params["company_id"]),
-        ));
+        );
  
-        $router->put('/{company_id}/legal', ShopContext::wrap(
+        $router->put('/{company_id}/legal', 
             static fn(Request $request, array $params): Response
-                => $container->get(CompanyController::class)->updateLegal($params["company_id"]),
-        ));
+                => $container->get(CompanyController::class)->updateLegal($request, $params["company_id"]),
+        );
     }
 }
