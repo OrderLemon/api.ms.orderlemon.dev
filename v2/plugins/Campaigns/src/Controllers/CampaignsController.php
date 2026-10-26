@@ -47,6 +47,11 @@ final class CampaignsController
     {
         return $this->call('campaigns_config_options', []);
     }
+    
+    public function getTypes() : Response
+    {
+        return $this->call("campaign_get_types", []);
+    }
 
     public function getCampaigns(string $shopId): Response
     {
