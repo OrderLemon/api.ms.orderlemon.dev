@@ -53,11 +53,14 @@ final class CampaignsController
         return $this->call("campaign_get_types", []);
     }
 
-    public function getCampaigns(string $shopId): Response
+    public function getCampaigns(Request $request, string $shopId): Response
     {
-        $shopId = $this->requireShopId($shopId);
+        $query = array_filter(
+            ['archived' => $request->query('archived'), 'status' => $request->query('status')],
+            static fn(?string $value): bool => $value !== null,
+        );
 
-        return $this->call('campaigns_get', ['shop_id' => $shopId]);
+        return $this->call('campaigns_get', ['shop_id' => $this->requireShopId($shopId), ...$query]);
     }
 
     public function getCampaign(string $shopId, string $id): Response
