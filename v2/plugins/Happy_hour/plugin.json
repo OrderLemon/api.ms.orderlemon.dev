@@ -1,0 +1,9 @@
+{
+    "name": "Happy_hour",
+    "slug": "happy_hour",
+    "description": "Forwards Happy Hour setup, runs and stock to the happy_hour service.",
+    "version": "1.0.0",
+    "author": "Eduard <eduard@orderlemon.com>",
+    "enabled": true,
+    "dependencies": []
+}
