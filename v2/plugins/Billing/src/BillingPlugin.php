@@ -52,7 +52,7 @@ final class BillingPlugin extends AbstractPlugin
 
         $router->get('/{shop_id}/payment-method', ShopContext::wrap(
             static fn(Request $request, array $params): Response
-                => $container->get(BillingController::class)->paymentMethod($params["invoice_id"]),
+                => $container->get(BillingController::class)->paymentMethod(),
         ));
     }
 }

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Plugins\Billing\Controllers;
 
-use Plugins\Payment_methods\Services\PaymentMethodsService;
 use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Support\Logger;
@@ -22,7 +21,7 @@ final class BillingController
     {
         $this->assertShopId();
         
-        $resposne = $this->call("payway_get_plan", ["shop_id" => shop_id]);
+        $response = $this->call("payway_get_plan", ["shop_id" => shop_id]);
 
         return Response::ok(["plan" => $response]);
     }
@@ -31,7 +30,7 @@ final class BillingController
     {
         $this->assertShopId();
         
-        $resposne = $this->call("payway_get_invoices", ["shop_id" => shop_id]);
+        $response = $this->call("payway_get_invoices", ["shop_id" => shop_id]);
 
         return Response::ok(["invoices" => $response]);
     }
@@ -40,7 +39,7 @@ final class BillingController
     {
         $this->assertShopId();
         
-        $resposne = $this->call("payway_get_invoice", ["shop_id" => shop_id, "invoice_id" => $invoiceId]);
+        $response = $this->call("payway_get_invoice", ["shop_id" => shop_id, "invoice_id" => $invoiceId]);
 
         return Response::ok(["invoice" => $response]);
     }
@@ -49,7 +48,7 @@ final class BillingController
     {
         $this->assertShopId();
         
-        $resposne = $this->call("payway_get_invoice_pdf", ["shop_id" => shop_id, "invoice_id" => $invoiceId]);
+        $response = $this->call("payway_get_invoice_pdf", ["shop_id" => shop_id, "invoice_id" => $invoiceId]);
 
         return Response::ok(["pdf" => $response]);
     }
@@ -58,14 +57,14 @@ final class BillingController
     {
         $this->assertShopId();
         
-        $resposne = $this->call("payway_get_payout_payment_method", ["shop_id" => shop_id]);
+        $response = $this->call("payway_get_payout_payment_method", ["shop_id" => shop_id]);
 
         return Response::ok(["payment_method" => $response]);
     }
     
     private function assertShopId() : void
     {
-        if(!defined("shop_id") || filter_var(shop_id, FILTER_VALIDATE_INT)
+        if(!defined("shop_id") || !filter_var(shop_id, FILTER_VALIDATE_INT)
                 || shop_id < 1){
             throw new \Pmsrapi\V2\Exception\ValidationException(["gatway shop id" => "Invalid shop id provided!"]);
         }
@@ -77,8 +76,8 @@ final class BillingController
             return $this->client->call($function, $params, $payload);
         } catch (\Pmsrapi\V2\Exception\ApiException $ex) {
             $this->logger->error(
+                    "Proxy call failed!",
                     [
-                        "message" => "Proxy call failed!",
                         "function" => $function,
                         "location" => "Billing",
                         "error_code" => $ex->errorCode(),
@@ -86,7 +85,19 @@ final class BillingController
                     ]
             );
             
-            return ["message" => "Error while retrieving data"];
+            throw match ($ex->statusCode()) {
+                404 => new \Pmsrapi\V2\Exception\ApiException('That recource could not be found.', 404),
+                422 => new \Pmsrapi\V2\Exception\ValidationException([], 'The information you provided could not be processed.'),
+                429 => new \Pmsrapi\V2\Exception\ServiceException(
+                    'Too many requests — please wait a moment and try again.',
+                    429,
+                    'rate_limited',
+                ),
+                default => new \Pmsrapi\V2\Exception\ServiceException(
+                    'Something went wrong processing this request. Please try again.',
+                    $ex->statusCode() >= 500 ? 502 : $ex->statusCode(),
+                ),
+            };
         }
     }
 
