@@ -38,6 +38,12 @@ final class CampaignsPlugin extends AbstractPlugin
         );
 
         $router->get(
+            '/types',
+            static fn(Request $request, array $params): Response
+                => $container->get(CampaignsController::class)->getTypes(),
+        );
+
+        $router->get(
             '/{shop_id}',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
