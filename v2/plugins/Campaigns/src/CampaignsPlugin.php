@@ -47,7 +47,7 @@ final class CampaignsPlugin extends AbstractPlugin
             '/{shop_id}',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(CampaignsController::class)->getCampaigns($params['shop_id']),
+                    => $container->get(CampaignsController::class)->getCampaigns($request, $params['shop_id']),
             ),
         );
 
