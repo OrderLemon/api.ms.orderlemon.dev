@@ -1,0 +1,9 @@
+{
+    "name": "Ai_agent",
+    "slug": "ai_agent",
+    "description": "Forwards the AI agent screen (settings, texts, lists) to the shop service.",
+    "version": "1.0.0",
+    "author": "Eduard <eduard@orderlemon.com>",
+    "enabled": true,
+    "dependencies": []
+}
