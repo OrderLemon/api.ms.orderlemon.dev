@@ -15,7 +15,9 @@ use Pmsrapi\V2\Plugin\PluginRouter;
 use Pmsrapi\V2\Support\Logger;
 use Pmsrapi\V2\Support\ShopContext;
 
-// The shop.ms AI agent routes under /v2/ai_agent/…
+// The shop.ms AI agent routes under /v2/ai_agent/…: the screen (GET/PUT /{shop_id}),
+// its lists (/{shop_id}/items), the Google Calendar connection
+// (POST/DELETE /{shop_id}/connections/google_calendar) and the calendar picker (GET /{shop_id}/calendars).
 final class Ai_agentPlugin extends AbstractPlugin
 {
     public function register(PluginRegistrar $registrar): void
@@ -68,6 +70,30 @@ final class Ai_agentPlugin extends AbstractPlugin
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
                     => $container->get(AiAgentController::class)->deleteItem($request, $params['shop_id']),
+            ),
+        );
+
+        $router->post(
+            '/{shop_id}/connections/google_calendar',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(AiAgentController::class)->connectGoogleCalendar($request, $params['shop_id']),
+            ),
+        );
+
+        $router->delete(
+            '/{shop_id}/connections/google_calendar',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(AiAgentController::class)->disconnectGoogleCalendar($params['shop_id']),
+            ),
+        );
+
+        $router->get(
+            '/{shop_id}/calendars',
+            ShopContext::wrap(
+                static fn(Request $request, array $params): Response
+                    => $container->get(AiAgentController::class)->calendars($params['shop_id']),
             ),
         );
     }

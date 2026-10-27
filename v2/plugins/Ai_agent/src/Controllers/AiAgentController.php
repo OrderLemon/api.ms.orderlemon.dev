@@ -20,6 +20,9 @@ final class AiAgentController
     private const array STATUS_BY_ERROR_CODE = [
         'not_found' => 404,
         'conflict' => 409,
+        'calendar_not_connected' => 409,
+        'calendar_needs_reconnect' => 409,
+        'google_not_configured' => 503,
         'validation_failed' => 422,
         'method_not_allowed' => 405,
         'rate_limited' => 429,
@@ -54,6 +57,21 @@ final class AiAgentController
     public function deleteItem(Request $request, string $shopId): Response
     {
         return $this->call('ai_agent_item_delete', ['shop_id' => $this->requireId($shopId)], $request->body);
+    }
+
+    public function connectGoogleCalendar(Request $request, string $shopId): Response
+    {
+        return $this->call('ai_agent_google_calendar_connect', ['shop_id' => $this->requireId($shopId)], $request->body);
+    }
+
+    public function disconnectGoogleCalendar(string $shopId): Response
+    {
+        return $this->call('ai_agent_google_calendar_disconnect', ['shop_id' => $this->requireId($shopId)]);
+    }
+
+    public function calendars(string $shopId): Response
+    {
+        return $this->call('ai_agent_calendars', ['shop_id' => $this->requireId($shopId)]);
     }
 
     private function call(string $function, array $params, array $payload = []): Response
