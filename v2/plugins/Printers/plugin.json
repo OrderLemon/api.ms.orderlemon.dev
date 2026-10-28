@@ -1,0 +1,9 @@
+{
+    "name": "Printers",
+    "slug": "printers",
+    "description": "Forwards the shop panel's printer screens (list, rename, on/off, move, remove, test print, print an order) to the print service.",
+    "version": "1.0.0",
+    "author": "Eduard <eduard@orderlemon.com>",
+    "enabled": true,
+    "dependencies": []
+}
