@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Plugins\Orders;
 
 use Plugins\Orders\Controllers\OrdersController;
+use Plugins\Auth\Access\EndpointSecurity;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Core\Container;
 use Pmsrapi\V2\Support\Logger;
@@ -22,6 +23,7 @@ final class OrdersPlugin extends AbstractPlugin
             OrdersController::class,
             static fn(Container $container): OrdersController => new OrdersController(
                 $container->get(ServiceClient::class),
+                $container->get(EndpointSecurity::class),
                 $container->get(Logger::class),
             ),
         );
@@ -43,7 +45,7 @@ final class OrdersPlugin extends AbstractPlugin
 
         // Registered after every literal /{shop_id}/... route: the router is first-match.
         $router->get('/{shop_id}/{id}', static fn(Request $request, array $params): Response
-            => $container->get(OrdersController::class)->getOrder($params['shop_id'], $params['id']));
+            => $container->get(OrdersController::class)->getOrder($request, $params['shop_id'], $params['id']));
 
         $router->put('/{shop_id}/{id}', static fn(Request $request, array $params): Response
             => $container->get(OrdersController::class)->updateOrder($request, $params['shop_id'], $params['id']));

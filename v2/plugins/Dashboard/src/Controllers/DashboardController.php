@@ -6,6 +6,7 @@ namespace Plugins\Dashboard\Controllers;
 
 use DateTimeImmutable;
 use Plugins\Dashboard\Services\DashboardService;
+use Plugins\Auth\Access\EndpointSecurity;
 use Pmsrapi\V2\Exception\ValidationException;
 use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
@@ -16,10 +17,13 @@ final class DashboardController
 
     public function __construct(
         private readonly DashboardService $dashboard,
+        private readonly EndpointSecurity $security,
     ) {}
 
     public function show(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $this->requireId($shopId, 'shop_id'), "analytics");
+        
         [$from, $to] = $this->requirePeriod($request);
 
         return Response::ok($this->dashboard->forShop(
@@ -31,6 +35,8 @@ final class DashboardController
 
     public function showProduct(Request $request, string $shopId, string $productId): Response
     {
+        $this->security->approveCall($request, $this->requireId($shopId, 'shop_id'), "products");
+        
         [$from, $to] = $this->requirePeriod($request);
 
         return Response::ok($this->dashboard->forProduct(

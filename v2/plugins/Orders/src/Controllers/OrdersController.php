@@ -31,7 +31,7 @@ final class OrdersController
     /** GET /orders/{shop_id}?status_id=&logistics_type=&from=Y-m-d&to=Y-m-d&limit=&offset= */
     public function listOrders(Request $request, string $shopId): Response
     {
-        $this->$security->approveCall($request, $this->requireShopId($shopId), "orders");
+        $this->security->approveCall($request, $this->requireShopId($shopId), "orders");
         $params = ['shop_id' => $this->requireShopId($shopId)];
 
         foreach (self::LIST_QUERY_KEYS as $key) {
@@ -46,9 +46,9 @@ final class OrdersController
     }
 
     /** GET /orders/{shop_id}/{id} */
-    public function getOrder(string $shopId, string $id): Response
+    public function getOrder(Request $request, string $shopId, string $id): Response
     {
-        $this->$security->approveCall($request, $this->requireShopId($shopId), "orders");
+        $this->security->approveCall($request, $this->requireShopId($shopId), "orders");
         return $this->call('orders_get', [
             'shop_id' => $this->requireShopId($shopId),
             'id' => $this->requireOrderId($id),
@@ -58,7 +58,7 @@ final class OrdersController
     /** PUT /orders/{shop_id}/{id}  body: the fields to change, e.g. {"status_id": 4} */
     public function updateOrder(Request $request, string $shopId, string $id): Response
     {
-        $this->$security->approveCall($request, $this->requireShopId($shopId), "orders");
+        $this->security->approveCall($request, $this->requireShopId($shopId), "orders");
         $params = [
             'shop_id' => $this->requireShopId($shopId),
             'id' => $this->requireOrderId($id),
@@ -74,7 +74,7 @@ final class OrdersController
     /** POST /orders/{shop_id}/client/usual  body: {"phone": "..."} */
     public function usualForClient(Request $request, string $shopId): Response
     {
-        $this->$security->approveCall($request, $this->requireShopId($shopId), "orders");
+        $this->security->approveCall($request, $this->requireShopId($shopId), "orders");
         $shopId = $this->requireShopId($shopId);
         $phone = $this->requirePhone($request);
 
@@ -84,7 +84,7 @@ final class OrdersController
     /** POST /orders/{shop_id}/client/reorder  body: {"phone": "...", "hash": "..."} */
     public function reorder(Request $request, string $shopId): Response
     {
-        $this->$security->approveCall($request, $this->requireShopId($shopId), "orders");
+        $this->security->approveCall($request, $this->requireShopId($shopId), "orders");
         $shopId = $this->requireShopId($shopId);
         $phone = $this->requirePhone($request);
         $hash = $this->requireField((string) ($request->body['hash'] ?? ''), 'hash');

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 namespace Plugins\Products\Controllers;
+use Plugins\Auth\Access\EndpointSecurity;
 
 use DateTimeImmutable;
 use Pmsrapi\V2\Cluster\ServiceClient;
@@ -48,25 +49,32 @@ final class ProductsController
         private readonly ServiceClient $serviceClient,
         private readonly Logger $logger,
         private readonly ValidationService $validationService,
+        private readonly EndpointSecurity $security,
     ) {}
 
-    public function getProducts(string $shopId): Response
+    public function getProducts(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $this->requireShopId($shopId), "products");
+
         $shopId = $this->requireShopId($shopId);
 
         return $this->call('products_get', ['shop_id' => $shopId]);
     }
 
-    public function getProductsForCategory(string $shopId, string $categoryId): Response
+    public function getProductsForCategory(Request $request, string $shopId, string $categoryId): Response
     {
+        $this->security->approveCall($request, $this->requireShopId($shopId), "products");
+
         $shopId = $this->requireShopId($shopId);
         $categoryId = $this->requirePositiveInt($categoryId, 'category_id');
 
         return $this->call('products_get_for_category', ['shop_id' => $shopId, 'category_id' => $categoryId]);
     }
 
-    public function getProduct(string $shopId, string $id): Response
+    public function getProduct(Request $request, string $shopId, string $id): Response
     {
+        $this->security->approveCall($request, $this->requireShopId($shopId), "products");
+
         $shopId = $this->requireShopId($shopId);
         $id = $this->requirePositiveInt($id, 'id');
 
@@ -75,6 +83,8 @@ final class ProductsController
 
     public function createProduct(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $this->requireShopId($shopId), "products");
+
         $shopId = $this->requireShopId($shopId);
         $this->validatePayload($request->body, requireAll: true);
 
@@ -83,6 +93,8 @@ final class ProductsController
 
     public function updateProduct(Request $request, string $shopId, string $id): Response
     {
+        $this->security->approveCall($request, $this->requireShopId($shopId), "products.stock");
+
         $shopId = $this->requireShopId($shopId);
         $id = $this->requirePositiveInt($id, 'id');
         $this->validatePayload($request->body, requireAll: false);
@@ -90,8 +102,10 @@ final class ProductsController
         return $this->call('products_update', ['shop_id' => $shopId, 'id' => $id], $request->body);
     }
 
-    public function deleteProduct(string $shopId, string $id): Response
+    public function deleteProduct(Request $request, string $shopId, string $id): Response
     {
+        $this->security->approveCall($request, $this->requireShopId($shopId), "products.stock");
+
         $shopId = $this->requireShopId($shopId);
         $id = $this->requirePositiveInt($id, 'id');
 

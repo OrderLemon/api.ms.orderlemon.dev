@@ -15,6 +15,7 @@ use Pmsrapi\V2\Plugin\PluginRouter;
 use Pmsrapi\V2\Services\ValidationService;
 use Pmsrapi\V2\Support\Logger;
 use Pmsrapi\V2\Support\ShopContext;
+use Plugins\Auth\Access\EndpointSecurity;
 
 final class ProductsPlugin extends AbstractPlugin
 {
@@ -26,6 +27,7 @@ final class ProductsPlugin extends AbstractPlugin
                 $container->get(ServiceClient::class),
                 $container->get(Logger::class),
                 $container->get(ValidationService::class),
+                $container->get(EndpointSecurity::class),
             ),
         );
     }
@@ -36,7 +38,7 @@ final class ProductsPlugin extends AbstractPlugin
             '/{shop_id}',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(ProductsController::class)->getProducts($params['shop_id']),
+                    => $container->get(ProductsController::class)->getProducts($request, $params['shop_id']),
             ),
         );
 
@@ -45,6 +47,7 @@ final class ProductsPlugin extends AbstractPlugin
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
                     => $container->get(ProductsController::class)->getProductsForCategory(
+                        $request,
                         $params['shop_id'],
                         $params['category_id'],
                     ),
@@ -55,7 +58,7 @@ final class ProductsPlugin extends AbstractPlugin
             '/{shop_id}/{id}',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(ProductsController::class)->getProduct($params['shop_id'], $params['id']),
+                    => $container->get(ProductsController::class)->getProduct($request, $params['shop_id'], $params['id']),
             ),
         );
 
@@ -83,7 +86,7 @@ final class ProductsPlugin extends AbstractPlugin
             '/{shop_id}/{id}',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(ProductsController::class)->deleteProduct($params['shop_id'], $params['id']),
+                    => $container->get(ProductsController::class)->deleteProduct($request, $params['shop_id'], $params['id']),
             ),
         );
     }

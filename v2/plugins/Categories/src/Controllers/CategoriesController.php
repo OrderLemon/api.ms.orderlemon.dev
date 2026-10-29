@@ -14,6 +14,7 @@ use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Services\ValidationService;
 use Pmsrapi\V2\Support\Logger;
+use Plugins\Auth\Access\EndpointSecurity;
 
 /**
  * Payload-shape checks in {@see validatePayload()} mirror products.ms's own
@@ -51,17 +52,20 @@ final class CategoriesController
         private readonly ServiceClient $serviceClient,
         private readonly Logger $logger,
         private readonly ValidationService $validationService,
+        private readonly EndpointSecurity $security,
     ) {}
 
-    public function getCategories(string $shopId): Response
+    public function getCategories(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $this->requireShopId($shopId), "categories");
         $shopId = $this->requireShopId($shopId);
 
         return $this->call('categories_get', ['shop_id' => $shopId]);
     }
 
-    public function getCategory(string $shopId, string $id): Response
+    public function getCategory(Request $request, string $shopId, string $id): Response
     {
+        $this->security->approveCall($request, $this->requireShopId($shopId), "categories");
         $shopId = $this->requireShopId($shopId);
         $id = $this->requirePositiveInt($id, 'id');
 
@@ -70,6 +74,7 @@ final class CategoriesController
 
     public function createCategory(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $this->requireShopId($shopId), "categories");
         $shopId = $this->requireShopId($shopId);
         $this->validatePayload($request->body, requireAll: true);
 
@@ -78,6 +83,7 @@ final class CategoriesController
 
     public function updateCategory(Request $request, string $shopId, string $id): Response
     {
+        $this->security->approveCall($request, $this->requireShopId($shopId), "categories");
         $shopId = $this->requireShopId($shopId);
         $id = $this->requirePositiveInt($id, 'id');
         $this->validatePayload($request->body, requireAll: false);
@@ -85,8 +91,9 @@ final class CategoriesController
         return $this->call('categories_update', ['shop_id' => $shopId, 'id' => $id], $request->body);
     }
 
-    public function deleteCategory(string $shopId, string $id): Response
+    public function deleteCategory(Request $request, string $shopId, string $id): Response
     {
+        $this->security->approveCall($request, $this->requireShopId($shopId), "categories");
         $shopId = $this->requireShopId($shopId);
         $id = $this->requirePositiveInt($id, 'id');
 
