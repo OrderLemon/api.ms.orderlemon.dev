@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Plugins\Auth;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Plugins\Auth\Controllers\SignInController;
 use Plugins\Auth\Guest\GuestAuthHandler;
 use Plugins\Auth\Guest\GuestTokens;
 use Pmsrapi\V2\Cache\RateLimiter;
+use Pmsrapi\V2\Cache\RedisClient;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Core\Config;
 use Pmsrapi\V2\Core\Container;
@@ -50,6 +52,17 @@ final class AuthPlugin extends AbstractPlugin
                 $container->get(GuestTokens::class),
                 $container->get(SignInController::class),
                 $container->get(RateLimiter::class),
+            ),
+        );
+
+        $registrar->singleton(
+            EndpointSecurity::class,
+            static fn(Container $container): EndpointSecurity => new EndpointSecurity(
+                $container->get(Config::class),
+                $container->get(TokenStore::class),
+                $container->get(ServiceClient::class),
+                $container->get(RedisClient::class),
+                $container->get(Logger::class),
             ),
         );
     }
