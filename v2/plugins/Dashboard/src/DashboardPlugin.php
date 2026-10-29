@@ -13,6 +13,7 @@ use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Plugin\AbstractPlugin;
 use Pmsrapi\V2\Plugin\PluginRegistrar;
 use Pmsrapi\V2\Plugin\PluginRouter;
+use Plugins\Auth\Access\EndpointSecurity;
 
 final class DashboardPlugin extends AbstractPlugin
 {
@@ -29,6 +30,7 @@ final class DashboardPlugin extends AbstractPlugin
             DashboardController::class,
             static fn(Container $container): DashboardController => new DashboardController(
                 $container->get(DashboardService::class),
+                $container->get(EndpointSecurity::class),
             ),
         );
     }

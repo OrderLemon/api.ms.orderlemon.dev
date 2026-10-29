@@ -15,6 +15,7 @@ use Pmsrapi\V2\Plugin\PluginRouter;
 use Pmsrapi\V2\Services\ValidationService;
 use Pmsrapi\V2\Support\Logger;
 use Pmsrapi\V2\Support\ShopContext;
+use Plugins\Auth\Access\EndpointSecurity;
 
 final class CategoriesPlugin extends AbstractPlugin
 {
@@ -26,6 +27,7 @@ final class CategoriesPlugin extends AbstractPlugin
                 $container->get(ServiceClient::class),
                 $container->get(Logger::class),
                 $container->get(ValidationService::class),
+                $container->get(EndpointSecurity::class),
             ),
         );
     }
@@ -36,7 +38,7 @@ final class CategoriesPlugin extends AbstractPlugin
             '/{shop_id}',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(CategoriesController::class)->getCategories($params['shop_id']),
+                    => $container->get(CategoriesController::class)->getCategories($request, $params['shop_id']),
             ),
         );
 
@@ -44,7 +46,7 @@ final class CategoriesPlugin extends AbstractPlugin
             '/{shop_id}/{id}',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(CategoriesController::class)->getCategory($params['shop_id'], $params['id']),
+                    => $container->get(CategoriesController::class)->getCategory($request, $params['shop_id'], $params['id']),
             ),
         );
 
@@ -72,7 +74,7 @@ final class CategoriesPlugin extends AbstractPlugin
             '/{shop_id}/{id}',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(CategoriesController::class)->deleteCategory($params['shop_id'], $params['id']),
+                    => $container->get(CategoriesController::class)->deleteCategory($request, $params['shop_id'], $params['id']),
             ),
         );
     }
