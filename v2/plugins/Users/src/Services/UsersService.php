@@ -56,6 +56,15 @@ final class UsersService
         private readonly Logger $logger,
     ) {}
 
+    public function getByPhone(string $phoneNumber) : ?array
+    {
+        
+        
+        $user = $this->call("users_get",["phonenumber" => $phoneNumber]);
+        
+        return $user["data"] ?? null;
+    }
+    
     /**
      * @param array<string, mixed> $payload
      * @return array{data: mixed, meta: ?array<string, mixed>}
