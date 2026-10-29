@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\Ticket;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Plugins\Ticket\Controllers\TicketController;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Core\Container;
@@ -21,6 +22,7 @@ final class TicketPlugin extends AbstractPlugin
             TicketController::class,
             static fn(Container $container): TicketController => new TicketController(
                 $container->get(ServiceClient::class),
+                $container->get(EndpointSecurity::class),
             ),
         );
     }
@@ -28,6 +30,6 @@ final class TicketPlugin extends AbstractPlugin
     public function routes(PluginRouter $router, Container $container): void
     {
         $router->get('/{shop_id}/{order_id}', static fn(Request $request, array $params): Response
-            => $container->get(TicketController::class)->getData($params['shop_id'], $params['order_id']));
+            => $container->get(TicketController::class)->getData($request, $params['shop_id'], $params['order_id']));
     }
 }

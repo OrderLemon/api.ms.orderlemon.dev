@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\Payment_methods;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Plugins\Payment_methods\Controllers\PaymentMethodsController;
 use Plugins\Payment_methods\Services\PaymentMethodsService;
 use Pmsrapi\V2\Cluster\ServiceClient;
@@ -45,6 +46,7 @@ final class Payment_methodsPlugin extends AbstractPlugin
             PaymentMethodsController::class,
             static fn(Container $container): PaymentMethodsController => new PaymentMethodsController(
                 $container->get(PaymentMethodsService::class),
+                $container->get(EndpointSecurity::class),
             ),
         );
     }
@@ -53,7 +55,7 @@ final class Payment_methodsPlugin extends AbstractPlugin
     {
         $router->get('/{shop_id}', ShopContext::wrap(
             static fn(Request $request, array $params): Response
-                => $container->get(PaymentMethodsController::class)->list($params['shop_id']),
+                => $container->get(PaymentMethodsController::class)->list($request, $params['shop_id']),
         ));
 
         $router->get('/{shop_id}/checkout', ShopContext::wrap(

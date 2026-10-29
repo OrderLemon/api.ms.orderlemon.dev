@@ -12,6 +12,7 @@ use Pmsrapi\V2\Exception\ValidationException;
 use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Support\Logger;
+use Plugins\Auth\Access\EndpointSecurity;
 
 /**
  * Checks the request's shape here (shop_id, a well-formed type, a known file
@@ -30,15 +31,27 @@ final class ExportsController
     public function __construct(
         private readonly ServiceClient $serviceClient,
         private readonly Logger $logger,
+        private readonly EndpointSecurity $security,
     ) {}
 
     public function createExport(Request $request, string $shopId, string $type): Response
     {
+        $this->security->approveCall($request, $shopId, $this->exportFeature($type));
+
         $shopId = $this->requireShopId($shopId);
         $type = $this->requireType($type);
         $format = $this->requireFormat($request->body['format'] ?? 'csv');
 
         return $this->call('exports_create', ['type' => $type], ['shop_id' => $shopId, 'format' => $format]);
+    }
+
+    // Order exports carry customer data: unknown types get the stricter orders.export.
+    private function exportFeature(string $type): string
+    {
+        return match (strtolower($type)) {
+            'products', 'menu', 'categories' => 'products',
+            default => 'orders.export',
+        };
     }
 
     private function call(string $function, array $params, array $payload): Response

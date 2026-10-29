@@ -11,6 +11,7 @@ use Pmsrapi\V2\Exception\ValidationException;
 use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Support\Logger;
+use Plugins\Auth\Access\EndpointSecurity;
 
 /**
  * Thin proxy — no local payload validation. campaigns.ms is the source of
@@ -41,6 +42,7 @@ final class CampaignsController
     public function __construct(
         private readonly ServiceClient $serviceClient,
         private readonly Logger $logger,
+        private readonly EndpointSecurity $security,
     ) {}
 
     public function getConfigOptions(): Response
@@ -55,6 +57,8 @@ final class CampaignsController
 
     public function getCampaigns(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "marketing");
+
         $query = array_filter(
             ['archived' => $request->query('archived'), 'status' => $request->query('status')],
             static fn(?string $value): bool => $value !== null,
@@ -63,8 +67,10 @@ final class CampaignsController
         return $this->call('campaigns_get', ['shop_id' => $this->requireShopId($shopId), ...$query]);
     }
 
-    public function getCampaign(string $shopId, string $id): Response
+    public function getCampaign(Request $request, string $shopId, string $id): Response
     {
+        $this->security->approveCall($request, $shopId, "marketing");
+
         $shopId = $this->requireShopId($shopId);
         $id = $this->requirePositiveInt($id, 'id');
 
@@ -73,6 +79,8 @@ final class CampaignsController
 
     public function createCampaign(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "marketing");
+
         $shopId = $this->requireShopId($shopId);
 
         return $this->call('campaigns_create', ['shop_id' => $shopId], $request->body);
@@ -80,27 +88,35 @@ final class CampaignsController
 
     public function updateCampaign(Request $request, string $shopId, string $id): Response
     {
+        $this->security->approveCall($request, $shopId, "marketing");
+
         $shopId = $this->requireShopId($shopId);
         $id = $this->requirePositiveInt($id, 'id');
 
         return $this->call('campaigns_update', ['shop_id' => $shopId, 'id' => $id], $request->body);
     }
 
-    public function deleteCampaign(string $shopId, string $id): Response
+    public function deleteCampaign(Request $request, string $shopId, string $id): Response
     {
+        $this->security->approveCall($request, $shopId, "marketing");
+
         $shopId = $this->requireShopId($shopId);
         $id = $this->requirePositiveInt($id, 'id');
 
         return $this->call('campaigns_delete', ['shop_id' => $shopId, 'id' => $id]);
     }
 
-    public function getResults(string $shopId, string $id): Response
+    public function getResults(Request $request, string $shopId, string $id): Response
     {
+        $this->security->approveCall($request, $shopId, "marketing");
+
         return $this->call('campaigns_results', $this->campaignParams($shopId, $id));
     }
 
     public function updateItemStock(Request $request, string $shopId, string $id, string $itemId): Response
     {
+        $this->security->approveCall($request, $shopId, "marketing");
+
         $params = [...$this->campaignParams($shopId, $id), 'item_id' => $this->requirePositiveInt($itemId, 'item_id')];
 
         return $this->call('campaigns_item_stock', $params, $request->body);
@@ -108,23 +124,31 @@ final class CampaignsController
 
     public function updateSlotCapacity(Request $request, string $shopId, string $id, string $slotId): Response
     {
+        $this->security->approveCall($request, $shopId, "marketing");
+
         $params = [...$this->campaignParams($shopId, $id), 'slot_id' => $this->requirePositiveInt($slotId, 'slot_id')];
 
         return $this->call('campaigns_slot_capacity', $params, $request->body);
     }
 
-    public function scheduleCampaign(string $shopId, string $id): Response
+    public function scheduleCampaign(Request $request, string $shopId, string $id): Response
     {
+        $this->security->approveCall($request, $shopId, "marketing");
+
         return $this->call('campaigns_schedule', $this->campaignParams($shopId, $id));
     }
 
-    public function cancelCampaign(string $shopId, string $id): Response
+    public function cancelCampaign(Request $request, string $shopId, string $id): Response
     {
+        $this->security->approveCall($request, $shopId, "marketing");
+
         return $this->call('campaigns_cancel', $this->campaignParams($shopId, $id));
     }
 
-    public function duplicateCampaign(string $shopId, string $id): Response
+    public function duplicateCampaign(Request $request, string $shopId, string $id): Response
     {
+        $this->security->approveCall($request, $shopId, "marketing");
+
         return $this->call('campaigns_duplicate', $this->campaignParams($shopId, $id));
     }
 

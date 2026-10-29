@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\CompanyWebhooks;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Plugins\CompanyWebhooks\Controllers\CompanyWebhooksController;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Core\Container;
@@ -25,6 +26,7 @@ final class CompanyWebhooksPlugin extends AbstractPlugin
             static fn(Container $c): CompanyWebhooksController => new CompanyWebhooksController(
                 $c->get(ServiceClient::class),
                 $c->get(Logger::class),
+                $c->get(EndpointSecurity::class),
             ),
         );
     }
@@ -35,13 +37,13 @@ final class CompanyWebhooksPlugin extends AbstractPlugin
             => $container->get(CompanyWebhooksController::class)->listEventTypes());
 
         $router->get('/{company_id}/webhooks', static fn(Request $request, array $params): Response
-            => $container->get(CompanyWebhooksController::class)->list($params['company_id']));
+            => $container->get(CompanyWebhooksController::class)->list($request, $params['company_id']));
 
         $router->post('/{company_id}/webhooks', static fn(Request $request, array $params): Response
             => $container->get(CompanyWebhooksController::class)->add($request, $params['company_id']));
 
         $router->get('/{company_id}/webhooks/{webhook_id}', static fn(Request $request, array $params): Response
-            => $container->get(CompanyWebhooksController::class)->get($params['company_id'], $params['webhook_id']));
+            => $container->get(CompanyWebhooksController::class)->get($request, $params['company_id'], $params['webhook_id']));
 
         $router->put('/{company_id}/webhooks/{webhook_id}', static fn(Request $request, array $params): Response
             => $container->get(CompanyWebhooksController::class)->update($request, $params['company_id'], $params['webhook_id']));
@@ -54,6 +56,6 @@ final class CompanyWebhooksPlugin extends AbstractPlugin
             => $container->get(CompanyWebhooksController::class)->listEvents($request, $params['company_id']));
 
         $router->post('/{company_id}/events/{event_id}/resend', static fn(Request $request, array $params): Response
-            => $container->get(CompanyWebhooksController::class)->resend($params['company_id'], $params['event_id']));
+            => $container->get(CompanyWebhooksController::class)->resend($request, $params['company_id'], $params['event_id']));
     }
 }

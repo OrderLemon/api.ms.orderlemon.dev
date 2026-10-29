@@ -13,6 +13,7 @@ use Pmsrapi\V2\Exception\ValidationException;
 use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Support\Logger;
+use Plugins\Auth\Access\EndpointSecurity;
 
 
 final class ImportsController
@@ -26,10 +27,13 @@ final class ImportsController
     public function __construct(
         private readonly ServiceClient $serviceClient,
         private readonly Logger $logger,
+        private readonly EndpointSecurity $security,
     ) {}
 
     public function createImport(Request $request, string $shopId, string $type): Response
     {
+        $this->security->approveCall($request, $shopId, "products.import");
+
         $shopId = $this->requirePositiveInt($shopId, 'shop_id');
         $type = $this->requireType($type);
         $body = $request->body;
@@ -62,8 +66,10 @@ final class ImportsController
         return isset($result['import_id']) ? Response::created($result) : Response::ok($result);
     }
 
-    public function getImport(string $shopId, string $type, string $importId): Response
+    public function getImport(Request $request, string $shopId, string $type, string $importId): Response
     {
+        $this->security->approveCall($request, $shopId, "products.import");
+
         $shopId = $this->requirePositiveInt($shopId, 'shop_id');
         $type = $this->requireType($type);
         $importId = $this->requirePositiveInt($importId, 'import_id');

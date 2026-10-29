@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\Logistics\Controllers;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Exception\ServiceException;
 use Pmsrapi\V2\Http\Request;
@@ -13,10 +14,13 @@ final class LogisticsController
 {
     public function __construct(
         private readonly ServiceClient $serviceClient,
+        private readonly EndpointSecurity $security,
     ) {}
 
-    public function getLogistics(string $shopId): Response
+    public function getLogistics(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         try {
             $response = $this->serviceClient->call(
                 'shop_logistics_get',
@@ -31,6 +35,8 @@ final class LogisticsController
 
     public function updateLogistics(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         try {
             $response = $this->serviceClient->call(
                 'shop_logistics_update',

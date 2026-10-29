@@ -14,6 +14,7 @@ use Pmsrapi\V2\Plugin\PluginRegistrar;
 use Pmsrapi\V2\Plugin\PluginRouter;
 use Pmsrapi\V2\Support\Logger;
 use Pmsrapi\V2\Support\ShopContext;
+use Plugins\Auth\Access\EndpointSecurity;
 
 /**
  *   POST /v2/imports/{shop_id}/{type}               body {"file": "<base64>", "file_name": "x.xlsx", "dry_run": true}
@@ -33,6 +34,7 @@ final class ImportsPlugin extends AbstractPlugin
             static fn(Container $container): ImportsController => new ImportsController(
                 $container->get(ServiceClient::class),
                 $container->get(Logger::class),
+                $container->get(EndpointSecurity::class),
             ),
         );
     }
@@ -56,6 +58,7 @@ final class ImportsPlugin extends AbstractPlugin
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
                     => $container->get(ImportsController::class)->getImport(
+                        $request,
                         $params['shop_id'],
                         $params['type'],
                         $params['import_id'],

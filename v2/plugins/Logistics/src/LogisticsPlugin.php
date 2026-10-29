@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\Logistics;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Plugins\Logistics\Controllers\LogisticsController;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Core\Container;
@@ -22,6 +23,7 @@ final class LogisticsPlugin extends AbstractPlugin
             LogisticsController::class,
             static fn(Container $container): LogisticsController => new LogisticsController(
                 $container->get(ServiceClient::class),
+                $container->get(EndpointSecurity::class),
             ),
         );
     }
@@ -30,7 +32,7 @@ final class LogisticsPlugin extends AbstractPlugin
     {
         $router->get('/{shop_id}', ShopContext::wrap(
             static fn(Request $request, array $params): Response
-                => $container->get(LogisticsController::class)->getLogistics($params['shop_id']),
+                => $container->get(LogisticsController::class)->getLogistics($request, $params['shop_id']),
         ));
 
         $router->put('/{shop_id}', ShopContext::wrap(

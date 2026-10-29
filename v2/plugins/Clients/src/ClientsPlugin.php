@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\Clients;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Plugins\Clients\Controllers\ClientsController;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Core\Container;
@@ -21,6 +22,7 @@ final class ClientsPlugin extends AbstractPlugin
             ClientsController::class,
             static fn(Container $container): ClientsController => new ClientsController(
                 $container->get(ServiceClient::class),
+                $container->get(EndpointSecurity::class),
             ),
         );
     }
@@ -28,6 +30,6 @@ final class ClientsPlugin extends AbstractPlugin
     public function routes(PluginRouter $router, Container $container): void
     {
         $router->get('/{shop_id}/{phonenumber}', static fn(Request $request, array $params): Response
-            => $container->get(ClientsController::class)->getInfo($params['shop_id'], $params['phonenumber']));
+            => $container->get(ClientsController::class)->getInfo($request, $params['shop_id'], $params['phonenumber']));
     }
 }

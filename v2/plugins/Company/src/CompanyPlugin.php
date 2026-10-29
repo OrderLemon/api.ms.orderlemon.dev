@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\Company;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Plugins\Company\Controllers\CompanyController;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Core\Container;
@@ -23,7 +24,8 @@ final class CompanyPlugin extends AbstractPlugin
             CompanyController::class,
             static fn(Container $container): CompanyController => new CompanyController(
                 $container->get(ServiceClient::class),
-                $container->get(Logger::class)
+                $container->get(Logger::class),
+                $container->get(EndpointSecurity::class),
             ),
         );
     }
@@ -32,7 +34,7 @@ final class CompanyPlugin extends AbstractPlugin
     {
         $router->get('/{company_id}/legal', 
             static fn(Request $request, array $params): Response
-                => $container->get(CompanyController::class)->getLegal($params["company_id"]),
+                => $container->get(CompanyController::class)->getLegal($request, $params["company_id"]),
         );
  
         $router->put('/{company_id}/legal', 

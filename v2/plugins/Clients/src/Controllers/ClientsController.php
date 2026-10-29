@@ -4,20 +4,25 @@ declare(strict_types=1);
 
 namespace Plugins\Clients\Controllers;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Exception\ServiceException;
 use Pmsrapi\V2\Exception\ValidationException;
+use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
 
 final class ClientsController
 {
     public function __construct(
         private readonly ServiceClient $serviceClient,
+        private readonly EndpointSecurity $security,
     ) {}
 
     /** GET /clients/{shop_id}/{phonenumber} */
-    public function getInfo(string $shopId, string $phonenumber): Response
+    public function getInfo(Request $request, string $shopId, string $phonenumber): Response
     {
+        $this->security->approveCall($request, $shopId, 'orders');
+
         $shopId = $this->requireShopId($shopId);
         $phonenumber = trim($phonenumber);
 

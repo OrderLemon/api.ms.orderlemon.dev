@@ -14,6 +14,7 @@ use Pmsrapi\V2\Plugin\PluginRegistrar;
 use Pmsrapi\V2\Plugin\PluginRouter;
 use Pmsrapi\V2\Support\Logger;
 use Pmsrapi\V2\Support\ShopContext;
+use Plugins\Auth\Access\EndpointSecurity;
 
 // The happy_hour.ms routes (spec 10.2) under /v2/happy_hour/…
 final class Happy_hourPlugin extends AbstractPlugin
@@ -25,6 +26,7 @@ final class Happy_hourPlugin extends AbstractPlugin
             static fn(Container $c): HappyHourController => new HappyHourController(
                 $c->get(ServiceClient::class),
                 $c->get(Logger::class),
+                $c->get(EndpointSecurity::class),
             ),
         );
     }
@@ -35,7 +37,7 @@ final class Happy_hourPlugin extends AbstractPlugin
             '/{shop_id}/settings',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(HappyHourController::class)->getSettings($params['shop_id']),
+                    => $container->get(HappyHourController::class)->getSettings($request, $params['shop_id']),
             ),
         );
 
@@ -51,7 +53,7 @@ final class Happy_hourPlugin extends AbstractPlugin
             '/{shop_id}/start',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(HappyHourController::class)->start($params['shop_id']),
+                    => $container->get(HappyHourController::class)->start($request, $params['shop_id']),
             ),
         );
 
@@ -59,7 +61,7 @@ final class Happy_hourPlugin extends AbstractPlugin
             '/{shop_id}/stop',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(HappyHourController::class)->stop($params['shop_id']),
+                    => $container->get(HappyHourController::class)->stop($request, $params['shop_id']),
             ),
         );
 
@@ -67,7 +69,7 @@ final class Happy_hourPlugin extends AbstractPlugin
             '/{shop_id}/runs',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(HappyHourController::class)->getRuns($params['shop_id']),
+                    => $container->get(HappyHourController::class)->getRuns($request, $params['shop_id']),
             ),
         );
 
@@ -75,7 +77,7 @@ final class Happy_hourPlugin extends AbstractPlugin
             '/{shop_id}/runs/{happy_hour_id}',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(HappyHourController::class)->getRun($params['shop_id'], $params['happy_hour_id']),
+                    => $container->get(HappyHourController::class)->getRun($request, $params['shop_id'], $params['happy_hour_id']),
             ),
         );
 

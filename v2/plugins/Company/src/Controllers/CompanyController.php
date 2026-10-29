@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\Company\Controllers;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Plugins\Payment_methods\Services\PaymentMethodsService;
 use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
@@ -16,10 +17,13 @@ final class CompanyController
     public function __construct(
         private readonly ServiceClient $client,
         private readonly Logger $logger,
+        private readonly EndpointSecurity $security,
     ) {}
 
-    public function getLegal(string $companyId): Response
+    public function getLegal(Request $request, string $companyId): Response
     {
+        $this->security->approveCompany($request, $companyId);
+
         $companyId = $this->assertCompanyId($companyId);
         
         $response = $this->call("shop_get_company_legal", ["company_id" => $companyId]);
@@ -29,6 +33,8 @@ final class CompanyController
   
     public function updateLegal(Request $request, string $companyId): Response
     {
+        $this->security->approveCompany($request, $companyId);
+
         $companyId = $this->assertCompanyId($companyId);
         
         $payload = $this->assertPayload($request->body);
