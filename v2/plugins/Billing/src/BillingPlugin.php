@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\Billing;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Plugins\Billing\Controllers\BillingController;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Core\Container;
@@ -23,7 +24,8 @@ final class BillingPlugin extends AbstractPlugin
             BillingController::class,
             static fn(Container $container): BillingController => new BillingController(
                 $container->get(ServiceClient::class),
-                $container->get(Logger::class)
+                $container->get(Logger::class),
+                $container->get(EndpointSecurity::class),
             ),
         );
     }
@@ -32,27 +34,27 @@ final class BillingPlugin extends AbstractPlugin
     {
         $router->get('/{shop_id}/plan', ShopContext::wrap(
             static fn(Request $request, array $params): Response
-                => $container->get(BillingController::class)->plan(),
+                => $container->get(BillingController::class)->plan($request),
         ));
 
         $router->get('/{shop_id}/invoices', ShopContext::wrap(
             static fn(Request $request, array $params): Response
-                => $container->get(BillingController::class)->invoices(),
+                => $container->get(BillingController::class)->invoices($request),
         ));
 
         $router->get('/{shop_id}/invoice/{invoice_id}', ShopContext::wrap(
             static fn(Request $request, array $params): Response
-                => $container->get(BillingController::class)->invoice($params["invoice_id"]),
+                => $container->get(BillingController::class)->invoice($request, $params["invoice_id"]),
         ));
 
         $router->get('/{shop_id}/invoice/{invoice_id}/pdf', ShopContext::wrap(
             static fn(Request $request, array $params): Response
-                => $container->get(BillingController::class)->invoicePdf($params["invoice_id"]),
+                => $container->get(BillingController::class)->invoicePdf($request, $params["invoice_id"]),
         ));
 
         $router->get('/{shop_id}/payment-method', ShopContext::wrap(
             static fn(Request $request, array $params): Response
-                => $container->get(BillingController::class)->paymentMethod(),
+                => $container->get(BillingController::class)->paymentMethod($request),
         ));
     }
 }

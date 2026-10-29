@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\Shops\Controllers;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Exception\ServiceException;
 use Pmsrapi\V2\Exception\ValidationException;
@@ -14,10 +15,13 @@ final class ShopsController
 {
     public function __construct(
         private readonly ServiceClient $serviceClient,
+        private readonly EndpointSecurity $security,
     ) {}
 
-    public function listByCompany(string $companyId): Response
+    public function listByCompany(Request $request, string $companyId): Response
     {
+        $this->security->approveCompany($request, $companyId);
+
         try {
             $response = $this->serviceClient->call(
                 'shop_list_by_company',
@@ -30,8 +34,10 @@ final class ShopsController
         return Response::ok(["shops" => $response]);
     }
 
-    public function getShop(string $shopId): Response
+    public function getShop(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         try {
             $response = $this->serviceClient->call(
                 'shop_get',
@@ -46,6 +52,8 @@ final class ShopsController
 
     public function updateGeneral(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         try {
             $response = $this->serviceClient->call(
                 'shop_update_general',
@@ -59,8 +67,10 @@ final class ShopsController
         return Response::ok(["shop" => $response]);
     }
 
-    public function getSettings(string $shopId): Response
+    public function getSettings(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         try {
             $response = $this->serviceClient->call(
                 'shop_settings_get',
@@ -75,6 +85,8 @@ final class ShopsController
 
     public function updateSettings(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         try {
             $response = $this->serviceClient->call(
                 'shop_settings_update',
@@ -89,8 +101,10 @@ final class ShopsController
         return Response::ok(["updated" => ($response['success'] ?? true) !== false]);
     }
 
-    public function getCalendar(string $shopId): Response
+    public function getCalendar(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "calendar");
+
         try {
             $response = $this->serviceClient->call(
                 'shop_calendar_get',
@@ -105,6 +119,8 @@ final class ShopsController
 
     public function updateCalendar(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "calendar");
+
         try {
             $response = $this->serviceClient->call(
                 'shop_calendar_update',
@@ -118,8 +134,10 @@ final class ShopsController
         return Response::ok(["updated" => (bool) ($response['updated'] ?? false)]);
     }
 
-    public function getQr(string $shopId): Response
+    public function getQr(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         try {
             $response = $this->serviceClient->call(
                 'shop_qr_get',
@@ -132,8 +150,10 @@ final class ShopsController
         return Response::ok(["qr" => $response]);
     }
 
-    public function createQr(string $shopId): Response
+    public function createQr(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         try {
             $response = $this->serviceClient->call(
                 'shop_qr_create',
@@ -148,6 +168,8 @@ final class ShopsController
 
     public function updateQr(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         try {
             $response = $this->serviceClient->call(
                 'shop_qr_update',

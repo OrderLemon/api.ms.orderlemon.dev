@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\Printers;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Plugins\Printers\Controllers\PrintersController;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Core\Container;
@@ -26,6 +27,7 @@ final class PrintersPlugin extends AbstractPlugin
             static fn(Container $c): PrintersController => new PrintersController(
                 $c->get(ServiceClient::class),
                 $c->get(Logger::class),
+                $c->get(EndpointSecurity::class),
             ),
         );
     }
@@ -35,12 +37,12 @@ final class PrintersPlugin extends AbstractPlugin
         $router->get(
             '/company/{company_id}',
             static fn(Request $request, array $params): Response
-                => $container->get(PrintersController::class)->listForCompany($params['company_id']),
+                => $container->get(PrintersController::class)->listForCompany($request, $params['company_id']),
         );
 
         $router->get('/{shop_id}', ShopContext::wrap(
             static fn(Request $request, array $params): Response
-                => $container->get(PrintersController::class)->listForShop($params['shop_id']),
+                => $container->get(PrintersController::class)->listForShop($request, $params['shop_id']),
         ));
 
         $router->put('/{shop_id}/{printer_id}', ShopContext::wrap(
@@ -50,7 +52,7 @@ final class PrintersPlugin extends AbstractPlugin
 
         $router->delete('/{shop_id}/{printer_id}', ShopContext::wrap(
             static fn(Request $request, array $params): Response
-                => $container->get(PrintersController::class)->remove($params['shop_id'], $params['printer_id']),
+                => $container->get(PrintersController::class)->remove($request, $params['shop_id'], $params['printer_id']),
         ));
 
         $router->post('/{shop_id}/{printer_id}/test', ShopContext::wrap(

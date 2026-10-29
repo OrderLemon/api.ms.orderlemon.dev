@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\Billing\Controllers;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Support\Logger;
@@ -15,47 +16,53 @@ final class BillingController
     public function __construct(
         private readonly ServiceClient $client,
         private readonly Logger $logger,
+        private readonly EndpointSecurity $security,
     ) {}
 
-    public function plan(): Response
+    public function plan(Request $request): Response
     {
         $this->assertShopId();
+        $this->security->approveCall($request, shop_id, "billing");
         
         $response = $this->call("payway_get_plan", ["shop_id" => shop_id]);
 
         return Response::ok(["plan" => $response]);
     }
     
-    public function invoices(): Response
+    public function invoices(Request $request): Response
     {
         $this->assertShopId();
+        $this->security->approveCall($request, shop_id, "accounting");
         
         $response = $this->call("payway_get_invoices", ["shop_id" => shop_id]);
 
         return Response::ok(["invoices" => $response]);
     }
     
-    public function invoice(string $invoiceId): Response
+    public function invoice(Request $request, string $invoiceId): Response
     {
         $this->assertShopId();
+        $this->security->approveCall($request, shop_id, "accounting");
         
         $response = $this->call("payway_get_invoice", ["shop_id" => shop_id, "invoice_id" => $invoiceId]);
 
         return Response::ok(["invoice" => $response]);
     }
     
-    public function invoicePdf(string $invoiceId): Response
+    public function invoicePdf(Request $request, string $invoiceId): Response
     {
         $this->assertShopId();
+        $this->security->approveCall($request, shop_id, "accounting");
         
         $response = $this->call("payway_get_invoice_pdf", ["shop_id" => shop_id, "invoice_id" => $invoiceId]);
 
         return Response::ok(["pdf" => $response]);
     }
     
-    public function paymentMethod(): Response
+    public function paymentMethod(Request $request): Response
     {
         $this->assertShopId();
+        $this->security->approveCall($request, shop_id, "billing");
         
         $response = $this->call("payway_get_payout_payment_method", ["shop_id" => shop_id]);
 

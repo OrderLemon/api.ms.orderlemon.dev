@@ -11,6 +11,7 @@ use Pmsrapi\V2\Exception\ValidationException;
 use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Support\Logger;
+use Plugins\Auth\Access\EndpointSecurity;
 
 // Thin proxy: shop.ms validates the bodies. Calls go through
 // ServiceClient::stream() so shop.ms's own error (code, message, field
@@ -32,45 +33,62 @@ final class AiAgentController
     public function __construct(
         private readonly ServiceClient $serviceClient,
         private readonly Logger $logger,
+        private readonly EndpointSecurity $security,
     ) {}
 
-    public function get(string $shopId): Response
+    public function get(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         return $this->call('ai_agent_get', ['shop_id' => $this->requireId($shopId)]);
     }
 
     public function save(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         return $this->call('ai_agent_update', ['shop_id' => $this->requireId($shopId)], $request->body);
     }
 
     public function createItem(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         return $this->call('ai_agent_item_create', ['shop_id' => $this->requireId($shopId)], $request->body);
     }
 
     public function updateItem(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         return $this->call('ai_agent_item_update', ['shop_id' => $this->requireId($shopId)], $request->body);
     }
 
     public function deleteItem(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         return $this->call('ai_agent_item_delete', ['shop_id' => $this->requireId($shopId)], $request->body);
     }
 
     public function connectGoogleCalendar(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         return $this->call('ai_agent_google_calendar_connect', ['shop_id' => $this->requireId($shopId)], $request->body);
     }
 
-    public function disconnectGoogleCalendar(string $shopId): Response
+    public function disconnectGoogleCalendar(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         return $this->call('ai_agent_google_calendar_disconnect', ['shop_id' => $this->requireId($shopId)]);
     }
 
-    public function calendars(string $shopId): Response
+    public function calendars(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         return $this->call('ai_agent_calendars', ['shop_id' => $this->requireId($shopId)]);
     }
 

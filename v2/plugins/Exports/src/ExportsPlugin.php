@@ -14,6 +14,7 @@ use Pmsrapi\V2\Plugin\PluginRegistrar;
 use Pmsrapi\V2\Plugin\PluginRouter;
 use Pmsrapi\V2\Support\Logger;
 use Pmsrapi\V2\Support\ShopContext;
+use Plugins\Auth\Access\EndpointSecurity;
 
 /**
  *   POST /v2/exports/{shop_id}/{type}    body {"format": "csv"|"xlsx"} (default csv)
@@ -30,6 +31,7 @@ final class ExportsPlugin extends AbstractPlugin
             static fn(Container $container): ExportsController => new ExportsController(
                 $container->get(ServiceClient::class),
                 $container->get(Logger::class),
+                $container->get(EndpointSecurity::class),
             ),
         );
     }

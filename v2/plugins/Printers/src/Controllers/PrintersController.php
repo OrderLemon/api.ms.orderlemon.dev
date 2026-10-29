@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\Printers\Controllers;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Exception\ApiException;
 use Pmsrapi\V2\Exception\ServiceException;
@@ -28,35 +29,48 @@ final class PrintersController
     public function __construct(
         private readonly ServiceClient $serviceClient,
         private readonly Logger $logger,
+        private readonly EndpointSecurity $security,
     ) {}
 
-    public function listForCompany(string $companyId): Response
+    public function listForCompany(Request $request, string $companyId): Response
     {
+        $this->security->approveCompany($request, $companyId);
+
         return $this->call('printers_list_company', ['company_id' => $this->requireId($companyId, 'company_id')]);
     }
 
-    public function listForShop(string $shopId): Response
+    public function listForShop(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         return $this->call('printers_list', ['shop_id' => $this->requireId($shopId, 'shop_id')]);
     }
 
     public function update(Request $request, string $shopId, string $printerId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         return $this->call('printers_update', $this->printerParams($shopId, $printerId), $request->body);
     }
 
-    public function remove(string $shopId, string $printerId): Response
+    public function remove(Request $request, string $shopId, string $printerId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         return $this->call('printers_delete', $this->printerParams($shopId, $printerId));
     }
 
     public function test(Request $request, string $shopId, string $printerId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         return $this->call('printers_test', $this->printerParams($shopId, $printerId), $request->body);
     }
 
     public function printOrder(Request $request, string $shopId, string $orderId): Response
     {
+        $this->security->approveCall($request, $shopId, "settings");
+
         return $this->call(
             'printers_print_order',
             ['shop_id' => $this->requireId($shopId, 'shop_id'), 'order_id' => $this->requireId($orderId, 'order_id')],

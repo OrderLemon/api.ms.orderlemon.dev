@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\Home;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Plugins\Home\Controllers\HomeController;
 use Plugins\Home\Services\HomeService;
 use Pmsrapi\V2\Cluster\ServiceClient;
@@ -44,6 +45,7 @@ final class HomePlugin extends AbstractPlugin
             HomeController::class,
             static fn(Container $container): HomeController => new HomeController(
                 $container->get(HomeService::class),
+                $container->get(EndpointSecurity::class),
             ),
         );
     }
@@ -51,6 +53,6 @@ final class HomePlugin extends AbstractPlugin
     public function routes(PluginRouter $router, Container $container): void
     {
         $router->get('/{shop_id}', static fn(Request $request, array $params): Response
-            => $container->get(HomeController::class)->show($params['shop_id']));
+            => $container->get(HomeController::class)->show($request, $params['shop_id']));
     }
 }

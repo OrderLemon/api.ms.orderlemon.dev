@@ -14,6 +14,7 @@ use Pmsrapi\V2\Plugin\PluginRegistrar;
 use Pmsrapi\V2\Plugin\PluginRouter;
 use Pmsrapi\V2\Support\Logger;
 use Pmsrapi\V2\Support\ShopContext;
+use Plugins\Auth\Access\EndpointSecurity;
 
 final class CampaignsPlugin extends AbstractPlugin
 {
@@ -24,6 +25,7 @@ final class CampaignsPlugin extends AbstractPlugin
             static fn(Container $container): CampaignsController => new CampaignsController(
                 $container->get(ServiceClient::class),
                 $container->get(Logger::class),
+                $container->get(EndpointSecurity::class),
             ),
         );
     }
@@ -55,7 +57,7 @@ final class CampaignsPlugin extends AbstractPlugin
             '/{shop_id}/{id}',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(CampaignsController::class)->getCampaign($params['shop_id'], $params['id']),
+                    => $container->get(CampaignsController::class)->getCampaign($request, $params['shop_id'], $params['id']),
             ),
         );
 
@@ -83,7 +85,7 @@ final class CampaignsPlugin extends AbstractPlugin
             '/{shop_id}/{id}',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(CampaignsController::class)->deleteCampaign($params['shop_id'], $params['id']),
+                    => $container->get(CampaignsController::class)->deleteCampaign($request, $params['shop_id'], $params['id']),
             ),
         );
 
@@ -91,7 +93,7 @@ final class CampaignsPlugin extends AbstractPlugin
             '/{shop_id}/{id}/results',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(CampaignsController::class)->getResults($params['shop_id'], $params['id']),
+                    => $container->get(CampaignsController::class)->getResults($request, $params['shop_id'], $params['id']),
             ),
         );
 
@@ -115,7 +117,7 @@ final class CampaignsPlugin extends AbstractPlugin
             '/{shop_id}/{id}/schedule',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(CampaignsController::class)->scheduleCampaign($params['shop_id'], $params['id']),
+                    => $container->get(CampaignsController::class)->scheduleCampaign($request, $params['shop_id'], $params['id']),
             ),
         );
 
@@ -123,7 +125,7 @@ final class CampaignsPlugin extends AbstractPlugin
             '/{shop_id}/{id}/cancel',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(CampaignsController::class)->cancelCampaign($params['shop_id'], $params['id']),
+                    => $container->get(CampaignsController::class)->cancelCampaign($request, $params['shop_id'], $params['id']),
             ),
         );
 
@@ -131,7 +133,7 @@ final class CampaignsPlugin extends AbstractPlugin
             '/{shop_id}/{id}/duplicate',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(CampaignsController::class)->duplicateCampaign($params['shop_id'], $params['id']),
+                    => $container->get(CampaignsController::class)->duplicateCampaign($request, $params['shop_id'], $params['id']),
             ),
         );
     }

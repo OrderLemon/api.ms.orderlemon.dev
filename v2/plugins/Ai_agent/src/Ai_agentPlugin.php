@@ -14,6 +14,7 @@ use Pmsrapi\V2\Plugin\PluginRegistrar;
 use Pmsrapi\V2\Plugin\PluginRouter;
 use Pmsrapi\V2\Support\Logger;
 use Pmsrapi\V2\Support\ShopContext;
+use Plugins\Auth\Access\EndpointSecurity;
 
 // The shop.ms AI agent routes under /v2/ai_agent/…: the screen (GET/PUT /{shop_id}),
 // its lists (/{shop_id}/items), the Google Calendar connection
@@ -27,6 +28,7 @@ final class Ai_agentPlugin extends AbstractPlugin
             static fn(Container $c): AiAgentController => new AiAgentController(
                 $c->get(ServiceClient::class),
                 $c->get(Logger::class),
+                $c->get(EndpointSecurity::class),
             ),
         );
     }
@@ -37,7 +39,7 @@ final class Ai_agentPlugin extends AbstractPlugin
             '/{shop_id}',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(AiAgentController::class)->get($params['shop_id']),
+                    => $container->get(AiAgentController::class)->get($request, $params['shop_id']),
             ),
         );
 
@@ -85,7 +87,7 @@ final class Ai_agentPlugin extends AbstractPlugin
             '/{shop_id}/connections/google_calendar',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(AiAgentController::class)->disconnectGoogleCalendar($params['shop_id']),
+                    => $container->get(AiAgentController::class)->disconnectGoogleCalendar($request, $params['shop_id']),
             ),
         );
 
@@ -93,7 +95,7 @@ final class Ai_agentPlugin extends AbstractPlugin
             '/{shop_id}/calendars',
             ShopContext::wrap(
                 static fn(Request $request, array $params): Response
-                    => $container->get(AiAgentController::class)->calendars($params['shop_id']),
+                    => $container->get(AiAgentController::class)->calendars($request, $params['shop_id']),
             ),
         );
     }

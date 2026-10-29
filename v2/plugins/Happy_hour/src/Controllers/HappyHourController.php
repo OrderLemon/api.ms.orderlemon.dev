@@ -11,6 +11,7 @@ use Pmsrapi\V2\Exception\ValidationException;
 use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Support\Logger;
+use Plugins\Auth\Access\EndpointSecurity;
 
 // Thin proxy: happy_hour.ms validates the bodies. Calls go through
 // ServiceClient::stream() so happy_hour.ms's own error (code, message,
@@ -29,40 +30,55 @@ final class HappyHourController
     public function __construct(
         private readonly ServiceClient $serviceClient,
         private readonly Logger $logger,
+        private readonly EndpointSecurity $security,
     ) {}
 
-    public function getSettings(string $shopId): Response
+    public function getSettings(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "happy_hour");
+
         return $this->call('happy_hour_settings', ['shop_id' => $this->requireId($shopId, 'shop_id')]);
     }
 
     public function updateSettings(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "happy_hour");
+
         return $this->call('happy_hour_settings_update', ['shop_id' => $this->requireId($shopId, 'shop_id')], $request->body);
     }
 
-    public function start(string $shopId): Response
+    public function start(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "happy_hour");
+
         return $this->call('happy_hour_start', ['shop_id' => $this->requireId($shopId, 'shop_id')]);
     }
 
-    public function stop(string $shopId): Response
+    public function stop(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "happy_hour");
+
         return $this->call('happy_hour_stop', ['shop_id' => $this->requireId($shopId, 'shop_id')]);
     }
 
-    public function getRuns(string $shopId): Response
+    public function getRuns(Request $request, string $shopId): Response
     {
+        $this->security->approveCall($request, $shopId, "happy_hour");
+
         return $this->call('happy_hour_runs', ['shop_id' => $this->requireId($shopId, 'shop_id')]);
     }
 
-    public function getRun(string $shopId, string $runId): Response
+    public function getRun(Request $request, string $shopId, string $runId): Response
     {
+        $this->security->approveCall($request, $shopId, "happy_hour");
+
         return $this->call('happy_hour_run', $this->runParams($shopId, $runId));
     }
 
     public function addRunProduct(Request $request, string $shopId, string $runId): Response
     {
+        $this->security->approveCall($request, $shopId, "happy_hour");
+
         return $this->call('happy_hour_run_products', $this->runParams($shopId, $runId), $request->body);
     }
 

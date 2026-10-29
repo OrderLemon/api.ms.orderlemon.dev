@@ -4,20 +4,25 @@ declare(strict_types=1);
 
 namespace Plugins\Ticket\Controllers;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Exception\ServiceException;
 use Pmsrapi\V2\Exception\ValidationException;
+use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
 
 final class TicketController
 {
     public function __construct(
         private readonly ServiceClient $serviceClient,
+        private readonly EndpointSecurity $security,
     ) {}
 
     /** GET /ticket/{shop_id}/{order_id} */
-    public function getData(string $shopId, string $orderId): Response
+    public function getData(Request $request, string $shopId, string $orderId): Response
     {
+        $this->security->approveCall($request, $shopId, 'orders');
+
         $shopId = $this->requirePositiveInt($shopId, 'shop_id');
         $orderId = $this->requirePositiveInt($orderId, 'order_id');
 

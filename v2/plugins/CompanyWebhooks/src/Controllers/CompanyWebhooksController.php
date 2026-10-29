@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugins\CompanyWebhooks\Controllers;
 
+use Plugins\Auth\Access\EndpointSecurity;
 use Pmsrapi\V2\Cluster\ServiceClient;
 use Pmsrapi\V2\Exception\ApiException;
 use Pmsrapi\V2\Exception\ServiceException;
@@ -33,6 +34,7 @@ final class CompanyWebhooksController
     public function __construct(
         private readonly ServiceClient $serviceClient,
         private readonly Logger $logger,
+        private readonly EndpointSecurity $security,
     ) {}
 
     public function listEventTypes(): Response
@@ -40,18 +42,24 @@ final class CompanyWebhooksController
         return Response::ok($this->call('companywebhooks_event_types', [])['data']);
     }
 
-    public function list(string $companyId): Response
+    public function list(Request $request, string $companyId): Response
     {
+        $this->security->approveCompany($request, $companyId);
+
         return Response::ok($this->call('companywebhooks_list', $this->companyParams($companyId))['data']);
     }
 
-    public function get(string $companyId, string $webhookId): Response
+    public function get(Request $request, string $companyId, string $webhookId): Response
     {
+        $this->security->approveCompany($request, $companyId);
+
         return Response::ok($this->call('companywebhooks_get', $this->webhookParams($companyId, $webhookId))['data']);
     }
 
     public function add(Request $request, string $companyId): Response
     {
+        $this->security->approveCompany($request, $companyId);
+
         return Response::created(
             $this->call('companywebhooks_create', $this->companyParams($companyId), $request->body)['data'],
         );
@@ -59,6 +67,8 @@ final class CompanyWebhooksController
 
     public function update(Request $request, string $companyId, string $webhookId): Response
     {
+        $this->security->approveCompany($request, $companyId);
+
         return Response::ok(
             $this->call('companywebhooks_update', $this->webhookParams($companyId, $webhookId), $request->body)['data'],
         );
@@ -66,6 +76,8 @@ final class CompanyWebhooksController
 
     public function delete(Request $request, string $companyId, string $webhookId): Response
     {
+        $this->security->approveCompany($request, $companyId);
+
         $this->call('companywebhooks_delete', $this->webhookParams($companyId, $webhookId), $request->body);
 
         return Response::noContent();
@@ -73,6 +85,8 @@ final class CompanyWebhooksController
 
     public function listEvents(Request $request, string $companyId): Response
     {
+        $this->security->approveCompany($request, $companyId);
+
         $params = $this->companyParams($companyId);
         foreach (['webhook_id', 'page', 'per_page'] as $key) {
             $value = $request->query($key);
@@ -86,8 +100,10 @@ final class CompanyWebhooksController
         return Response::ok($result['data'], $result['meta']);
     }
 
-    public function resend(string $companyId, string $eventId): Response
+    public function resend(Request $request, string $companyId, string $eventId): Response
     {
+        $this->security->approveCompany($request, $companyId);
+
         if (preg_match(self::EVENT_ID_RE, $eventId) !== 1) {
             throw new ValidationException(['event_id' => 'A valid event_id is required']);
         }
