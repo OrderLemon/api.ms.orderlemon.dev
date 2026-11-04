@@ -1,0 +1,9 @@
+{
+    "name": "Notifications",
+    "slug": "notifications",
+    "description": "Public edge for notifications.ms provider webhooks: verifies Mailgun and OneSignal tracking events and forwards them to notifications.ms. No routes; served by hooks/mailgun.php and hooks/onesignal.php.",
+    "version": "0.1.0",
+    "author": "OrderLemon",
+    "enabled": true,
+    "dependencies": []
+}
