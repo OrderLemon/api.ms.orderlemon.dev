@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-// POST /v2/plugins/Notifications/hooks/mailgun.php — Mailgun tracking webhooks (signed with the Mailgun HTTP webhook signing key).
+// POST /v2/webhooks/mailgun  (rewritten here by v2/.htaccess) — Mailgun tracking webhooks (signed with the Mailgun HTTP webhook signing key).
 // Served directly by Apache (v2/.htaccess serves real files), so the router and
 // the Bearer check never run; MailgunWebhookHandler verifies the request itself.
 

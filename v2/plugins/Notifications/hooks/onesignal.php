@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-// POST /v2/plugins/Notifications/hooks/onesignal.php — OneSignal Event Streams (shared secret: X-Webhook-Secret header or ?key=).
+// POST /v2/webhooks/onesignal  (rewritten here by v2/.htaccess) — OneSignal Event Streams (shared secret: X-Webhook-Secret header or ?key=).
 // Served directly by Apache (v2/.htaccess serves real files), so the router and
 // the Bearer check never run; OneSignalWebhookHandler verifies the request itself.
 

@@ -17,7 +17,7 @@ use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Support\Logger;
 
-// POST /v2/plugins/Notifications/hooks/onesignal.php — OneSignal Event Streams (delivered, clicked,
+// POST /v2/webhooks/onesignal (v2/.htaccess → hooks/onesignal.php) — OneSignal Event Streams (delivered, clicked,
 // failed). OneSignal doesn't sign its webhooks, so the stream is configured
 // with our shared secret: header `X-Webhook-Secret`, or `?key=` on the URL
 // when the plan doesn't allow custom headers. The body is the JSON template

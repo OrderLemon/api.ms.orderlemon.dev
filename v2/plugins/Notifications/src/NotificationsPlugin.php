@@ -17,7 +17,8 @@ use Pmsrapi\V2\Plugin\PluginRegistrar;
 use Pmsrapi\V2\Support\Logger;
 
 // Provider webhooks for notifications.ms. No routes: the providers call the
-// plugin's hooks/mailgun.php and hooks/onesignal.php directly (no Bearer token).
+// /v2/webhooks/{mailgun,onesignal}, which v2/.htaccess rewrites to hooks/*.php
+// (no Bearer token; the handlers verify the provider).
 final class NotificationsPlugin extends AbstractPlugin
 {
     public function register(PluginRegistrar $registrar): void

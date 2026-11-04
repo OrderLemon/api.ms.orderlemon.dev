@@ -6,6 +6,12 @@
     RewriteEngine On
     RewriteBase /v2/
 
+    # OrderLemon (not pmsrapi core): public provider webhooks for notifications.ms.
+    # /v2/webhooks/mailgun and /v2/webhooks/onesignal → the Notifications plugin's
+    # standalone hook files (they verify the provider themselves; no Bearer token).
+    # Keep this block if the v2 core is ever re-copied from the pmsrapi template.
+    RewriteRule ^webhooks/(mailgun|onesignal)/?$ plugins/Notifications/hooks/$1.php [L,QSA]
+
     # Serve existing files/dirs directly (static assets).
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d

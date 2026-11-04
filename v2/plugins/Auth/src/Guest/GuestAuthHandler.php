@@ -18,6 +18,7 @@ use Pmsrapi\V2\Http\Response;
  * core Bearer check doesn't apply). Access is controlled here instead:
  *
  *   POST /auth.php?a=session                 → {token, expires_at, config}   (no token needed)
+ *        config: {apple?, google?} from login.ms + {onesignal?: {app_id}} from notifications.ms
  *   POST /auth.php?a=apple|google|password   → {user, token}                 (Bearer <guest token>)
  *
  * Both are rate-limited per client IP. The sign-in actions reuse SignInController, so they
@@ -33,6 +34,7 @@ final class GuestAuthHandler
         private readonly GuestTokens $guests,
         private readonly SignInController $signIn,
         private readonly RateLimiter $limiter,
+        private readonly PushConfig $push,
     ) {}
 
     public function handle(Request $request, string $action): Response
@@ -54,7 +56,13 @@ final class GuestAuthHandler
     {
         $this->throttle('auth-session:' . $request->ip, self::SESSION_LIMIT);
 
-        return Response::ok($this->guests->issue() + ['config' => $this->signIn->providerConfig()]);
+        $config = (array) $this->signIn->providerConfig();
+        $onesignal = $this->push->onesignal();
+        if ($onesignal !== null) {
+            $config['onesignal'] = $onesignal;
+        }
+
+        return Response::ok($this->guests->issue() + ['config' => (object) $config]);
     }
 
     private function signIn(Request $request, \Closure $signIn): Response

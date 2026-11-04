@@ -16,7 +16,7 @@ use Pmsrapi\V2\Http\Request;
 use Pmsrapi\V2\Http\Response;
 use Pmsrapi\V2\Support\Logger;
 
-// POST /v2/plugins/Notifications/hooks/mailgun.php — Mailgun tracking webhooks (delivered, opened,
+// POST /v2/webhooks/mailgun (v2/.htaccess → hooks/mailgun.php) — Mailgun tracking webhooks (delivered, opened,
 // clicked, failed, complained, unsubscribed).
 // Body: {"signature": {timestamp, token, signature}, "event-data": {…}}.
 // Verified here, then `event-data` goes to notifications.ms

@@ -8,6 +8,8 @@ use Plugins\Auth\Access\EndpointSecurity;
 use Plugins\Auth\Controllers\SignInController;
 use Plugins\Auth\Guest\GuestAuthHandler;
 use Plugins\Auth\Guest\GuestTokens;
+use Plugins\Auth\Guest\PushConfig;
+use Pmsrapi\V2\Cache\QueryCache;
 use Pmsrapi\V2\Cache\RateLimiter;
 use Pmsrapi\V2\Cache\RedisClient;
 use Pmsrapi\V2\Cluster\ServiceClient;
@@ -47,11 +49,21 @@ final class AuthPlugin extends AbstractPlugin
         );
 
         $registrar->singleton(
+            PushConfig::class,
+            static fn(Container $container): PushConfig => new PushConfig(
+                $container->get(ServiceClient::class),
+                $container->get(QueryCache::class),
+                $container->get(Logger::class),
+            ),
+        );
+
+        $registrar->singleton(
             GuestAuthHandler::class,
             static fn(Container $container): GuestAuthHandler => new GuestAuthHandler(
                 $container->get(GuestTokens::class),
                 $container->get(SignInController::class),
                 $container->get(RateLimiter::class),
+                $container->get(PushConfig::class),
             ),
         );
 
