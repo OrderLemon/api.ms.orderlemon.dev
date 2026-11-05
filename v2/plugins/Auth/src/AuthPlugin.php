@@ -83,5 +83,8 @@ final class AuthPlugin extends AbstractPlugin
     {
         $router->post('/logout', static fn(Request $request): Response
             => $container->get(SignInController::class)->logout($request));
+
+        $router->put('/device', static fn(Request $request): Response
+            => $container->get(SignInController::class)->updateDevice($request));
     }
 }

@@ -46,6 +46,7 @@ final class SignInController
         'no_account' => 404,
         'email_ambiguous' => 409,
         'rate_limited' => 429,
+        'session_not_found' => 404,
     ];
 
     /** Optional device details forwarded with every sign-in => max length. */
@@ -129,6 +130,30 @@ final class SignInController
         $this->call('auth_logout', ['token' => $token, 'company_id' => $companyId]);
 
         return Response::ok(['logged_out' => true]);
+    }
+
+    // PUT /v2/auth/device  {one_signal_id: "<subscription id>" | null}  (Bearer <device token>)
+    // The panel calls it after the user allows push on this device (and with
+    // null on opt-out), so notifications.ms can reach it. login.ms stores it on
+    // the device session.
+    public function updateDevice(Request $request): Response
+    {
+        $token = (string) $request->bearerToken();
+        $companyId = $this->tokens->claims($token)['company_id'] ?? null;
+        if (!is_int($companyId)) {
+            throw new UnauthorizedException('Not a device session');
+        }
+
+        if (!array_key_exists('one_signal_id', $request->body)) {
+            throw new ValidationException(['one_signal_id' => 'one_signal_id is required (null to clear it)']);
+        }
+        $pushId = $request->body['one_signal_id'] === null
+            ? null
+            : $this->requireString($request->body, 'one_signal_id', self::DEVICE_FIELDS['one_signal_id']);
+
+        $this->call('auth_device_push_id', ['token' => $token, 'company_id' => $companyId, 'one_signal_id' => $pushId]);
+
+        return Response::ok(['one_signal_id' => $pushId]);
     }
 
     /**
