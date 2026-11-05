@@ -1,7 +1,7 @@
 {
     "name": "Imports",
     "slug": "imports",
-    "description": "Imports CSV/XLSX files of a shop's data through the dataport service.",
+    "description": "Imports a shop's data: CSV/XLSX files through the dataport service, and products from the shop's website through the scraper (ol_api_scrapy). /v2/webhooks/scraper is rewritten by v2/.htaccess to hooks/scraper.php.",
     "version": "1.0.0",
     "author": "Eduard <eduard@orderlemon.com>",
     "enabled": true,

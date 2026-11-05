@@ -12,6 +12,11 @@
     # Keep this block if the v2 core is ever re-copied from the pmsrapi template.
     RewriteRule ^webhooks/(mailgun|onesignal)/?$ plugins/Notifications/hooks/$1.php [L,QSA]
 
+    # OrderLemon (not pmsrapi core): the website scraper's "job finished" webhook.
+    # /v2/webhooks/scraper → the Imports plugin's standalone hook file (it checks the
+    # scraper's HMAC signature itself; no Bearer token). Keep this block too.
+    RewriteRule ^webhooks/scraper/?$ plugins/Imports/hooks/scraper.php [L,QSA]
+
     # Serve existing files/dirs directly (static assets).
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
